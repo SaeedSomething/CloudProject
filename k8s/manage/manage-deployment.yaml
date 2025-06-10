@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: manage
+  namespace: manage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: manage
+  template:
+    metadata:
+      labels:
+        app: manage
+    spec:
+      containers:
+      - name: manage
+        image: manage:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/app.env
+          subPath: app.env
+      volumes:
+      - name: config-volume
+        configMap:
+          name: manage-configmap

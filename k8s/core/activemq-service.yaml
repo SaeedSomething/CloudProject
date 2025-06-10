@@ -1,0 +1,17 @@
+# activemq-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: activemq
+  namespace: core
+spec:
+  type: ClusterIP
+  selector:
+    app: activemq
+  ports:
+    - name: jms
+      port: 61616
+      targetPort: 61616
+    - name: console
+      port: 8161
+      targetPort: 8161

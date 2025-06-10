@@ -1,0 +1,107 @@
+
+# version: "3.8"
+
+services:
+    mysql:
+        image: mysql:latest
+        container_name: auth-mysql
+        networks:
+            - auth_network
+        volumes:
+            - mysql_data:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: rootpass
+            MYSQL_DATABASE: auth_db
+            MYSQL_USER: auth_user
+            MYSQL_PASSWORD: auth_pass
+            MYSQL_ROOT_HOST: "%"
+        command: --bind-address=0.0.0.0
+            --skip-name-resolve
+        ports:
+            - "3306:3306"
+
+            - "33060:33060"
+        restart: always
+
+    postgres:
+        image: postgres:13.13-bullseye
+        container_name: core-postgres
+        networks:
+            - core_network
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_USER: core_user
+            POSTGRES_PASSWORD: core_pass
+            POSTGRES_DB: core_db
+        ports:
+            - "5432:5432"
+        restart: always
+
+    activemq:
+        image: webcenter/activemq
+        container_name: core-activemq
+        networks:
+            - core_network
+        ports:
+            - "8161:8161"
+            - "61616:61616"
+        volumes:
+            - activemq_data:/data/activemq
+        restart: always
+
+    auth-service:
+        build:
+            context: ./Auth
+            dockerfile: Dockerfile
+        container_name: auth-service
+        networks:
+            - auth_network
+            - service_network
+        depends_on:
+            - mysql
+        ports:
+            - "8082:8082"
+        environment:
+            PORT: :50051
+            URL_DB: "auth_user:auth_pass@tcp(auth-mysql:3306)/auth_db"
+            # user:password@tcp(localhost:33666)/db?parseTime=true&loc=Asia%2FShanghai
+            JWT_SECRET: "asd"
+            GOPROXY: "https://goproxy.cn,direct"
+        restart: always
+
+    core-service:
+        build:
+            context: ./Notification
+            dockerfile: Dockerfile
+        container_name: core-service
+        networks:
+            - core_network
+            - service_network
+        depends_on:
+            - postgres
+            - activemq
+            - auth-service
+        ports:
+            - "8080:8080"
+        environment:
+            SPRING_DATASOURCE_URL: jdbc:postgresql://core-postgres:5432/core_db
+            SPRING_ACTIVEMQ_BROKER_URL: tcp://core-activemq:61616
+            AUTH_GRPC_ADDRESS: auth-service
+            SPRING_DATASOURCE_USERNAME: core_user
+            SPRING_DATASOURCE_PASSWORD: core_pass
+            AUTH_GRPC_PORT: 50051
+        restart: no
+
+networks:
+    auth_network:
+        driver: bridge
+    core_network:
+        driver: bridge
+    service_network:
+        driver: bridge
+
+volumes:
+    mysql_data:
+    postgres_data:
+    activemq_data:

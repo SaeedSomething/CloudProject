@@ -1,0 +1,90 @@
+# core-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: core
+    namespace: core
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: core
+    template:
+        metadata:
+            labels:
+                app: core
+        spec:
+            containers:
+                - name: core
+                  image: project-core-service
+                  imagePullPolicy: Never
+                  ports:
+                      - containerPort: 8080
+                  env:
+                      - name: PROJECT_DATASOURCE_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: core-db-credentials
+                                key: DB_USER
+                      - name: PROJECT_DATASOURCE_PASS
+                        valueFrom:
+                            secretKeyRef:
+                                name: core-db-credentials
+                                key: DB_PASS
+                      - name: PROJECT_DATASOURCE_JDBC_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: core-config
+                                key: PROJECT_DATASOURCE_JDBC_URL
+                      - name: PROJECT_DATASOURCE_SCHEMA
+                        valueFrom:
+                            configMapKeyRef:
+                                name: core-config
+                                key: PROJECT_DATASOURCE_SCHEMA
+                      - name: PROJECT_ACTIVEMQ_BROKER_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: core-config
+                                key: PROJECT_ACTIVEMQ_BROKER_URL
+                      - name: ACTIVEMQ_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: core-config
+                                key: ACTIVEMQ_URL
+                      - name: ACTIVEMQ_KEY
+                        valueFrom:
+                            secretKeyRef:
+                                name: core-activemq-credentials
+                                key: ACTIVEMQ_KEY
+                      - name: ACTIVEMQ_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: core-activemq-credentials
+                                key: ACTIVEMQ_PASS
+                      - name: ACTIVEMQ_USERNAME
+                        valueFrom:
+                            secretKeyRef:
+                                name: core-activemq-credentials
+                                key: ACTIVEMQ_USER
+                      - name: AUTH_SERVICE_BASE_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: core-config
+                                key: AUTH_SERVICE_BASE_URL
+                      - name: AUTH_GRPC_ADDRESS
+                        valueFrom:
+                            configMapKeyRef:
+                                name: core-config
+                                key: AUTH_GRPC_ADDRESS
+                      - name: AUTH_GRPC_PORT
+                        valueFrom:
+                            configMapKeyRef:
+                                name: core-config
+                                key: AUTH_GRPC_PORT
+                  resources:
+                      requests:
+                          memory: "256Mi"
+                          cpu: "250m"
+                      limits:
+                          memory: "500Mi"
+                          cpu: "500m"

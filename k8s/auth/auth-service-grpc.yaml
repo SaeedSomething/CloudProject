@@ -1,0 +1,15 @@
+
+# auth-service-grpc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-grpc
+  namespace: auth
+spec:
+  type: ClusterIP
+  selector:
+    app: auth
+  ports:
+    - port: 50051
+      targetPort: grpc
+      name: grpc

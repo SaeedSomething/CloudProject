@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: manage-configmap
+  namespace: manage
+data:
+  app.env: |
+    DB_HOST=auth-mysql.auth
+    DB_PORT=3306
+    DB_USER=root
+    DB_PASSWORD=auth-root-pwd
+    DB_NAME=auth
+    SERVER_PORT=8080
