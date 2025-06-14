@@ -81,6 +81,11 @@ spec:
                             configMapKeyRef:
                                 name: core-config
                                 key: AUTH_GRPC_PORT
+                      - name: PROJECT_URL_CONFIG # Spring Boot will map this to project.url.config
+                        valueFrom:
+                            configMapKeyRef:
+                                name: core-config # Name of your ConfigMap
+                                key: PROJECT_URL_CONFIG
                   resources:
                       requests:
                           memory: "256Mi"

@@ -8,6 +8,7 @@ kubectl apply -f k8s/auth/mysql-service.yaml
 kubectl apply -f k8s/auth/auth-deployment.yaml 
 kubectl apply -f k8s/auth/auth-service-http.yaml 
 kubectl apply -f k8s/auth/auth-service-grpc.yaml
+kubectl apply -f k8s/auth/auth-service-nodeport.yaml
 kubectl apply -f k8s/core/core-namespace.yaml
 kubectl apply -f k8s/core/core-configmap.yaml 
 kubectl apply -f k8s/core/core-secret.yaml
@@ -16,15 +17,17 @@ kubectl apply -f k8s/core/core-db-credentials.yaml
 kubectl apply -f k8s/core/postgres-pvc.yaml 
 kubectl apply -f k8s/core/postgres-deployment.yaml 
 kubectl apply -f k8s/core/postgres-service.yaml
-kubectl apply -f k8s/core/activemq-pvc.yaml 
-kubectl apply -f k8s/core/activemq-deployment.yaml 
-kubectl apply -f k8s/core/activemq-service.yaml
+kubectl apply -f k8s/core/core-namespace.yaml
+kubectl apply -f k8s/core/core-configmap.yaml 
+kubectl apply -f k8s/core/core-secret.yaml
+kubectl apply -f k8s/core/core-activemq-credentials.yaml
+kubectl apply -f k8s/core/core-db-credentials.yaml
 kubectl apply -f k8s/core/core-deployment.yaml 
 kubectl apply -f k8s/core/core-service.yaml
 kubectl apply -f k8s/core/core-networkpolicy.yaml
 kubectl apply -f k8s/auth/auth-networkpolicy.yaml
+kubectl apply -f k8s/auth/auth-egress-networkpolicy.yaml
 
-kubectl apply -f k8s/auth/auth-service-nodeport.yaml
 
 
 kind load docker-image project-auth-service:latest --name=notif-mgmt

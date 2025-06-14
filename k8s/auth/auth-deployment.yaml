@@ -2,84 +2,83 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth
-  namespace: auth
+    name: auth
+    namespace: auth
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: auth
-  template:
-    metadata:
-      labels:
-        app: auth
-    spec:
-
-      containers:
-      - name: auth
-        image: project-auth-service
-        imagePullPolicy: Never
-        ports:
-        - name: http
-          containerPort: 8080
-        - name: grpc
-          containerPort: 50051
-        env:
-        # non-sensitive
-        - name: JWT_SECRET_KEY
-          valueFrom:
-            configMapKeyRef:
-              name: auth-config
-              key: JWT_SECRET_KEY
-        - name: JWT_SECRET
-          valueFrom:
-            configMapKeyRef:
-              name: auth-config
-              key: JWT_SECRET
-        - name: PORT
-          valueFrom:
-            configMapKeyRef:
-              name: auth-config
-              key: PORT
-        - name: DB_URL
-          valueFrom:
-            configMapKeyRef:
-              name: auth-config
-              key: DB_URL
-        - name: URL_DB
-          valueFrom:
-            configMapKeyRef:
-              name: auth-config
-              key: DB_URL
-        - name: DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: auth-config
-              key: DB_HOST
-        - name: DB_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: auth-config
-              key: DB_NAME
-        - name: DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: auth-db-credentials
-              key: DB_USER
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: auth-db-credentials
-              key: DB_PASS
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: auth-db-credentials
-              key: DB_PASS
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "125m"
-          limits:
-            memory: "256Mi"
-            cpu: "250m"
+    replicas: 1
+    selector:
+        matchLabels:
+            app: auth
+    template:
+        metadata:
+            labels:
+                app: auth
+        spec:
+            containers:
+                - name: auth
+                  image: project-auth-service
+                  imagePullPolicy: Never
+                  ports:
+                      - name: http
+                        containerPort: 8082
+                      - name: grpc
+                        containerPort: 50051
+                  env:
+                      # non-sensitive
+                      - name: JWT_SECRET_KEY
+                        valueFrom:
+                            configMapKeyRef:
+                                name: auth-config
+                                key: JWT_SECRET_KEY
+                      - name: JWT_SECRET
+                        valueFrom:
+                            configMapKeyRef:
+                                name: auth-config
+                                key: JWT_SECRET
+                      - name: PORT
+                        valueFrom:
+                            configMapKeyRef:
+                                name: auth-config
+                                key: PORT
+                      - name: DB_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: auth-config
+                                key: DB_URL
+                      - name: URL_DB
+                        valueFrom:
+                            configMapKeyRef:
+                                name: auth-config
+                                key: DB_URL
+                      - name: DB_HOST
+                        valueFrom:
+                            configMapKeyRef:
+                                name: auth-config
+                                key: DB_HOST
+                      - name: DB_NAME
+                        valueFrom:
+                            configMapKeyRef:
+                                name: auth-config
+                                key: DB_NAME
+                      - name: DB_USER
+                        valueFrom:
+                            secretKeyRef:
+                                name: auth-db-credentials
+                                key: DB_USER
+                      - name: DB_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: auth-db-credentials
+                                key: DB_PASS
+                      - name: MYSQL_ROOT_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: auth-db-credentials
+                                key: DB_PASS
+                  resources:
+                      requests:
+                          memory: "128Mi"
+                          cpu: "125m"
+                      limits:
+                          memory: "256Mi"
+                          cpu: "250m"

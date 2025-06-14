@@ -1,0 +1,42 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+    name: allow-auth-egress-to-mysql
+    namespace: auth
+spec:
+    podSelector:
+        matchLabels:
+            app: auth # This policy applies to your Auth service pods
+    policyTypes:
+        - Egress
+    egress:
+        - to:
+              - podSelector:
+                    matchLabels:
+                        app: mysql # Allow traffic to MySQL pods
+          ports:
+              - protocol: TCP
+                port: 3306
+        # Add rules to allow DNS queries to kube-dns
+        - to:
+              - namespaceSelector: # Allows to all pods in the kube-system namespace
+                    matchLabels:
+                        kubernetes.io/metadata.name: kube-system # Standard label for kube-system
+                podSelector:
+                    matchLabels:
+                        k8s-app: kube-dns # Standard label for kube-dns/CoreDNS pods
+          ports:
+              - protocol: UDP
+                port: 53
+              - protocol: TCP
+                port: 53
+        # If you don't want to be that specific with podSelector for kube-dns,
+        # you can allow to the service IP if you know it, or more broadly to port 53
+        # in the kube-system namespace, or even to any IP on port 53 if necessary,
+        # but the above is more secure.
+        # A simpler, more permissive DNS rule (if the above is too restrictive or labels differ):
+        # - ports:
+        #   - protocol: UDP
+        #     port: 53
+        #   - protocol: TCP
+        #     port: 53

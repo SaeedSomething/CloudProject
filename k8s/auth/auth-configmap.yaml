@@ -2,12 +2,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: auth-config
-  namespace: auth
+    name: auth-config
+    namespace: auth
 data:
-  JWT_SECRET_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIxIiwiZXhwIjoxNTQ3OTc0MDgyfQ.2Ye5_w1z3zpD4dSGdRp3s98ZipCNQqmsHRB9vioOx54"
-  JWT_SECRET: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIxIiwiZXhwIjoxNTQ3OTc0MDgyfQ.2Ye5_w1z3zpD4dSGdRp3s98ZipCNQqmsHRB9vioOx54"
-  PORT: ":50051"
-  DB_HOST: "mysql.auth.svc.cluster.local:3306"
-  DB_URL: "root:auth_pass@tcp(mysql.auth.svc.cluster.local:3306)/authdb"  # Use root instead of auth_user
-  DB_NAME: "authdb"
+    JWT_SECRET_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIxIiwiZXhwIjoxNTQ3OTc0MDgyfQ.2Ye5_w1z3zpD4dSGdRp3s98ZipCNQqmsHRB9vioOx54"
+    JWT_SECRET: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIxIiwiZXhwIjoxNTQ3OTc0MDgyfQ.2Ye5_w1z3zpD4dSGdRp3s98ZipCNQqmsHRB9vioOx54"
+    PORT: ":50051"
+    DB_HOST: "mysql.auth.svc.cluster.local:3306"
+    DB_URL: "root:auth_pass@tcp(mysql:3306)/authdb" # Use root instead of auth_user
+    DB_NAME: "authdb"
