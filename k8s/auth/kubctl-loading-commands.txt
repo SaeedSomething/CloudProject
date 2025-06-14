@@ -17,11 +17,9 @@ kubectl apply -f k8s/core/core-db-credentials.yaml
 kubectl apply -f k8s/core/postgres-pvc.yaml 
 kubectl apply -f k8s/core/postgres-deployment.yaml 
 kubectl apply -f k8s/core/postgres-service.yaml
-kubectl apply -f k8s/core/core-namespace.yaml
-kubectl apply -f k8s/core/core-configmap.yaml 
-kubectl apply -f k8s/core/core-secret.yaml
-kubectl apply -f k8s/core/core-activemq-credentials.yaml
-kubectl apply -f k8s/core/core-db-credentials.yaml
+kubectl apply -f k8s/core/activemq-pvc.yaml 
+kubectl apply -f k8s/core/activemq-deployment.yaml 
+kubectl apply -f k8s/core/activemq-service.yaml
 kubectl apply -f k8s/core/core-deployment.yaml 
 kubectl apply -f k8s/core/core-service.yaml
 kubectl apply -f k8s/core/core-networkpolicy.yaml
@@ -41,9 +39,12 @@ kind load docker-image mysql:latest --name=notif-mgmt
 
 
 
+kind load docker-image project-manage-service:latest --name=notif-mgmt
 
 kubectl apply -f k8s/manage/manage-namespace.yaml
 kubectl apply -f k8s/manage/manage-configmap.yaml
-kubectl apply -f k8s/manage/manage-networkpolicy.yaml
 kubectl apply -f k8s/manage/manage-deployment.yaml
 kubectl apply -f k8s/manage/manage-service.yaml
+
+
+kubectl apply -f k8s/manage/manage-networkpolicy.yaml
