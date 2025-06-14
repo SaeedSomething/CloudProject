@@ -1,6 +1,6 @@
 # Build stage
 FROM golang:1.23-alpine AS builder
-ENV GOPROXY=https://goproxy.cn,direct 
+ENV GOPROXY=https://goproxy.cn
 ENV GO111MODULE="on" 
 
 COPY go.mod .

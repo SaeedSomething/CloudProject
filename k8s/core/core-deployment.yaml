@@ -20,6 +20,10 @@ spec:
                   imagePullPolicy: Never
                   ports:
                       - containerPort: 8080
+                  envFrom:
+                      - configMapRef:
+                            name: core-config
+
                   env:
                       - name: PROJECT_DATASOURCE_USERNAME
                         valueFrom:
@@ -31,26 +35,7 @@ spec:
                             secretKeyRef:
                                 name: core-db-credentials
                                 key: DB_PASS
-                      - name: PROJECT_DATASOURCE_JDBC_URL
-                        valueFrom:
-                            configMapKeyRef:
-                                name: core-config
-                                key: PROJECT_DATASOURCE_JDBC_URL
-                      - name: PROJECT_DATASOURCE_SCHEMA
-                        valueFrom:
-                            configMapKeyRef:
-                                name: core-config
-                                key: PROJECT_DATASOURCE_SCHEMA
-                      - name: PROJECT_ACTIVEMQ_BROKER_URL
-                        valueFrom:
-                            configMapKeyRef:
-                                name: core-config
-                                key: PROJECT_ACTIVEMQ_BROKER_URL
-                      - name: ACTIVEMQ_URL
-                        valueFrom:
-                            configMapKeyRef:
-                                name: core-config
-                                key: ACTIVEMQ_URL
+
                       - name: ACTIVEMQ_KEY
                         valueFrom:
                             secretKeyRef:
@@ -66,26 +51,7 @@ spec:
                             secretKeyRef:
                                 name: core-activemq-credentials
                                 key: ACTIVEMQ_USER
-                      - name: AUTH_SERVICE_BASE_URL
-                        valueFrom:
-                            configMapKeyRef:
-                                name: core-config
-                                key: AUTH_SERVICE_BASE_URL
-                      - name: AUTH_GRPC_ADDRESS
-                        valueFrom:
-                            configMapKeyRef:
-                                name: core-config
-                                key: AUTH_GRPC_ADDRESS
-                      - name: AUTH_GRPC_PORT
-                        valueFrom:
-                            configMapKeyRef:
-                                name: core-config
-                                key: AUTH_GRPC_PORT
-                      - name: PROJECT_URL_CONFIG # Spring Boot will map this to project.url.config
-                        valueFrom:
-                            configMapKeyRef:
-                                name: core-config # Name of your ConfigMap
-                                key: PROJECT_URL_CONFIG
+
                   resources:
                       requests:
                           memory: "256Mi"

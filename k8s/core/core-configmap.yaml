@@ -19,3 +19,4 @@ data:
     ACTIVEMQ_URL: "failover:(tcp://activemq:61616)?randomize=true&jms.useAsyncSend=true&jms.sendTimeout=5000"
     ACTIVEMQ_USERNAME: "admin"
     PROJECT_URL_CONFIG: "http://localhost:30080"
+    PROJECT_SPRING_DATASOURCE_HIKARI_CONNECTIONTIMEOUT: "300000" # e.g., 10 seconds
