@@ -25,7 +25,7 @@ func (s *UserService) GetUsers(page, pageSize int) (*models.PaginatedUsers, erro
 	}
 
 	// Get paginated users
-	rows, err := s.db.Query("SELECT id, email, username FROM users LIMIT ? OFFSET ?", pageSize, offset)
+	rows, err := s.db.Query("SELECT id, email, email FROM users LIMIT ? OFFSET ?", pageSize, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (s *UserService) GetUsers(page, pageSize int) (*models.PaginatedUsers, erro
 	var users []models.User
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.ID, &user.Email, &user.Username); err != nil {
+		if err := rows.Scan(&user.Id, &user.Email, &user.Email); err != nil {
 			return nil, err
 		}
 		users = append(users, user)

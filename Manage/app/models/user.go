@@ -1,9 +1,9 @@
 package models
 
 type User struct {
-	ID       uint   `json:"id"`
+	Id       int64  `json:"id" gorm:"primaryKey"`
 	Email    string `json:"email"`
-	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type PaginatedUsers struct {
