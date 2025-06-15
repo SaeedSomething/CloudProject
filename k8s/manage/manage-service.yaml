@@ -4,10 +4,9 @@ metadata:
     name: manage
     namespace: manage
 spec:
-    type: NodePort
+    type: ClusterIP
     selector:
         app: manage
     ports:
         - port: 8080
           targetPort: 8080
-          nodePort: 30081

@@ -1,3 +1,11 @@
+kind load docker-image project-auth-service:latest --name=notif-mgmt
+kind load docker-image project-core-service:latest --name=notif-mgmt
+
+kind load docker-image webcenter/activemq:latest --name=notif-mgmt
+kind load docker-image postgres:13.13-bullseye --name=notif-mgmt
+kind load docker-image mysql:latest --name=notif-mgmt
+
+
 kubectl apply -f k8s/auth/auth-namespace.yaml
 kubectl apply -f k8s/auth/auth-configmap.yaml 
 kubectl apply -f k8s/auth/auth-secret.yaml
@@ -8,7 +16,7 @@ kubectl apply -f k8s/auth/mysql-service.yaml
 kubectl apply -f k8s/auth/auth-deployment.yaml 
 kubectl apply -f k8s/auth/auth-service-http.yaml 
 kubectl apply -f k8s/auth/auth-service-grpc.yaml
-kubectl apply -f k8s/auth/auth-service-nodeport.yaml
+# kubectl apply -f k8s/auth/auth-service-nodeport.yaml  # REMOVED - redundant with auth-service-http.yaml
 kubectl apply -f k8s/core/core-namespace.yaml
 kubectl apply -f k8s/core/core-configmap.yaml 
 kubectl apply -f k8s/core/core-secret.yaml
@@ -22,18 +30,8 @@ kubectl apply -f k8s/core/activemq-deployment.yaml
 kubectl apply -f k8s/core/activemq-service.yaml
 kubectl apply -f k8s/core/core-deployment.yaml 
 kubectl apply -f k8s/core/core-service.yaml
-kubectl apply -f k8s/core/core-networkpolicy.yaml
-kubectl apply -f k8s/auth/auth-networkpolicy.yaml
-kubectl apply -f k8s/auth/auth-egress-networkpolicy.yaml
 
 
-
-kind load docker-image project-auth-service:latest --name=notif-mgmt
-kind load docker-image project-core-service:latest --name=notif-mgmt
-
-kind load docker-image webcenter/activemq:latest --name=notif-mgmt
-kind load docker-image postgres:13.13-bullseye --name=notif-mgmt
-kind load docker-image mysql:latest --name=notif-mgmt
 
 
 
@@ -46,5 +44,97 @@ kubectl apply -f k8s/manage/manage-configmap.yaml
 kubectl apply -f k8s/manage/manage-deployment.yaml
 kubectl apply -f k8s/manage/manage-service.yaml
 
+# ========================================
+# Phase 4 - HAProxy, Nginx and Auto-scaling
+# ========================================
 
-kubectl apply -f k8s/manage/manage-networkpolicy.yaml
+# 1. Load Nginx image (if using custom image)
+kind load docker-image nginx:1.21 --name=notif-mgmt
+
+# 2. Apply Nginx Load Balancer
+kubectl apply -f k8s/nginx/nginx-namespace.yaml
+kubectl apply -f k8s/nginx/nginx-configmap.yaml
+kubectl apply -f k8s/nginx/nginx-deployment.yaml
+
+# 3. Enable Metrics Server (Required for HPA)
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# 4. Apply HPA configurations
+kubectl apply -f k8s/hpa/hpa-auth-service.yaml
+kubectl apply -f k8s/hpa/hpa-core-service.yaml
+kubectl apply -f k8s/hpa/hpa-manage-service.yaml
+
+# 5. Verify HPA status
+kubectl get hpa --all-namespaces
+
+# 6. Check Nginx deployment
+kubectl get pods -n nginx-lb
+kubectl get svc -n nginx-lb
+
+# ========================================
+# HAProxy (External - Run outside Kubernetes)
+# ========================================
+
+# Start HAProxy container (external to Kind cluster)
+docker run -d \
+  --name haproxy-external \
+  -p 80:80 \
+  -p 6443:6443 \
+  -p 8080:8080 \
+  -v ${PWD}/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro \
+  haproxy:2.4
+
+# Alternative for Windows PowerShell:
+# docker run -d --name haproxy-external -p 80:80 -p 6443:6443 -p 8080:8080 -v "$(Get-Location)\haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro" haproxy:2.4
+
+# Check HAProxy status
+docker ps | findstr haproxy
+docker logs haproxy-external
+
+# Access HAProxy stats dashboard
+# Open browser: http://localhost:8080/stats
+
+# ========================================
+# Testing and Monitoring Commands
+# ========================================
+
+# Monitor HPA scaling
+kubectl get pods --all-namespaces -w
+
+# Check resource usage
+kubectl top pods --all-namespaces
+kubectl top nodes
+
+# Test load generation (run in separate terminal)
+kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh
+# Inside the pod: while true; do wget -q -O- http://nginx-lb-service.nginx-lb/health; done
+
+# Port forward for direct testing (optional)
+kubectl port-forward -n nginx-lb service/nginx-lb-service 8081:80
+
+# Clean up HAProxy (when needed)
+# docker stop haproxy-external
+# docker rm haproxy-external
+
+# ========================================
+# Troubleshooting Commands  
+# ========================================
+
+# Check all services
+kubectl get svc --all-namespaces
+
+# Check pod logs
+kubectl logs -n nginx-lb deployment/nginx-lb
+kubectl logs -n auth deployment/auth
+kubectl logs -n core deployment/core
+kubectl logs -n manage deployment/manage
+
+# Describe HPA for debugging
+kubectl describe hpa -n auth auth-service-hpa
+kubectl describe hpa -n core core-service-hpa  
+kubectl describe hpa -n manage manage-service-hpa
+
+# Check metrics server
+kubectl get pods -n kube-system | findstr metrics
+
+
