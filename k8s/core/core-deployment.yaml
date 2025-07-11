@@ -26,15 +26,15 @@ spec:
                                   - key: topology.kubernetes.io/zone
                                     operator: In
                                     values:
-                                        - bamdad
+                                        # - bamdad
                                         - simin
-                                        - foough
-                podAntiAffinity:
-                    requiredDuringSchedulingIgnoredDuringExecution:
-                        - labelSelector:
-                              matchLabels:
-                                  app: core
-                          topologyKey: topology.kubernetes.io/zone
+                                        # - foough
+                # podAntiAffinity:
+                #     requiredDuringSchedulingIgnoredDuringExecution:
+                #         - labelSelector:
+                #               matchLabels:
+                #                   app: core
+                #           topologyKey: topology.kubernetes.io/zone
             containers:
                 - name: core
                   image: saeedsomething/project-core-service:latest

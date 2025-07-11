@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: nginx-lb
-    namespace: core
+    namespace: nginx-lb
 spec:
     replicas: 1
     selector:
@@ -25,15 +25,15 @@ spec:
                                   - key: topology.kubernetes.io/zone
                                     operator: In
                                     values:
-                                        - bamdad
+                                        # - bamdad
                                         - simin
-                                        - foough
-                podAntiAffinity:
-                    requiredDuringSchedulingIgnoredDuringExecution:
-                        - labelSelector:
-                              matchLabels:
-                                  app: nginx-lb
-                          topologyKey: topology.kubernetes.io/zone
+                                        # - foough
+                # podAntiAffinity:
+                #     requiredDuringSchedulingIgnoredDuringExecution:
+                #         - labelSelector:
+                #               matchLabels:
+                #                   app: nginx-lb
+                #           topologyKey: topology.kubernetes.io/zone
             containers:
                 - name: nginx
                   image: nginx:1.21
@@ -58,12 +58,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-lb-service
-  namespace: core
+    name: nginx-lb-service
+    namespace: core
 spec:
-  selector:
-    app: nginx-lb
-  ports:
-    - port: 80
-      targetPort: 80
-  type: LoadBalancer
+    selector:
+        app: nginx-lb
+    ports:
+        - port: 80
+          targetPort: 80
+    type: LoadBalancer

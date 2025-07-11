@@ -62,7 +62,6 @@ kubectl apply -f k8s/core/core-service.yaml
 # Step 5: Deploy Manage service
 Write-Host ""
 Write-Host "Step 5: Deploying Manage service..." -ForegroundColor Cyan
-kubectl apply -f k8s/manage/manage-namespace.yaml
 kubectl apply -f k8s/manage/manage-configmap.yaml
 kubectl apply -f k8s/manage/manage-deployment.yaml
 kubectl apply -f k8s/manage/manage-service.yaml

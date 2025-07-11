@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
     name: manage
-    namespace: manage
+    namespace: auth
 spec:
     type: ClusterIP
     selector:

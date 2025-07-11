@@ -2,77 +2,124 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
     name: nginx-config
-    namespace: core
+    namespace: nginx-lb
 data:
-    nginx.conf: |
-        events {
-            worker_connections 1024;
+  nginx.conf: |
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        # Enable sub_filter for response body rewriting
+        sub_filter_once off;  # Apply sub_filter to all occurrences
+        sub_filter_types text/html application/javascript application/json;  # Apply to HTML, JS, and JSON
+
+        # Auth service upstream
+        upstream auth-service-backend {
+            server auth-http.c9a4c1e532f44863d573d2be76f3eb17e201a93b-auth:8082 max_fails=3 fail_timeout=30s;
         }
 
-        http {
-            # Auth service upstream (HTTP endpoint)
-            upstream auth-service-backend {
-                server auth-http.c9a4c1e532f44863d573d2be76f3eb17e201a93b-auth:8082 max_fails=3 fail_timeout=30s;
-            }
-            
-            # Core service upstream
-            upstream core-service-backend {
-                server core:8080 max_fails=3 fail_timeout=30s;
-            }
-            
-            # Manage service upstream
-            upstream manage-service-backend {
-                server manage.c9a4c1e532f44863d573d2be76f3eb17e201a93b-manage:8080 max_fails=3 fail_timeout=30s;
-            }
-            
-            server {
-                listen 80;
-                
-                # Auth service routes (HTTP API)
-                location /auth/ {   
-                    rewrite ^/auth(/.*)$ $1 break;
+      # Core service upstream
+      upstream core-service-backend {
+        server core.c9a4c1e532f44863d573d2be76f3eb17e201a93b-core:8080 max_fails=3 fail_timeout=30s;
+      }
 
-                    proxy_pass http://auth-service-backend;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                    proxy_connect_timeout 30s;
-                    proxy_send_timeout 30s;
-                    proxy_read_timeout 30s;
-                }
-                
-                # Core service routes
-                location /core/ {
-                    rewrite ^/core(/.*)$ $1 break;
-                    proxy_pass http://core-service-backend;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                    proxy_connect_timeout 30s;
-                    proxy_send_timeout 30s;
-                    proxy_read_timeout 30s;
-                    sub_filter '/swagger-ui/' '/core/swagger-ui/';
-                    sub_filter 'href="/swagger-ui' 'href="/core/swagger-ui';
-                    sub_filter 'src="/swagger-ui' 'src="/core/swagger-ui';
-                }
-                
-                # Manage service routes
-                location /manage/ {
-                    rewrite ^/manage(/.*)$ $1 break;
+      # Manage service upstream
+      upstream manage-service-backend {
+        server manage.c9a4c1e532f44863d573d2be76f3eb17e201a93b-auth:8080 max_fails=3 fail_timeout=30s;
+      }
 
-                    proxy_pass http://manage-service-backend;
-                    proxy_set_header Host $host;
-                    proxy_set_header X-Real-IP $remote_addr;
-                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                    proxy_connect_timeout 30s;
-                    proxy_send_timeout 30s;
-                    proxy_read_timeout 30s;
-                }
-                
-                # Health check endpoint for HAProxy
-                location /health {
-                    return 200 "healthy\n";
-                    add_header Content-Type text/plain;
-                }
-            }
+      server {
+        listen 80;
+
+        # Auth service routes
+        location /auth/ {
+          rewrite ^/auth(/.*)$ $1 break;
+          proxy_pass http://auth-service-backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;  # Add for HTTPS awareness
+          proxy_http_version 1.1;  # Support persistent connections
+          proxy_set_header Upgrade $http_upgrade;  # Support WebSocket
+          proxy_set_header Connection "upgrade";   # Support WebSocket
+          proxy_connect_timeout 30s;
+          proxy_send_timeout 30s;
+          proxy_read_timeout 30s;
+          # Add CORS headers if needed
+          add_header Access-Control-Allow-Origin "*";  # Adjust for specific origins
+          add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+          add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range";
+        }
+
+        # Core service routes (with Swagger UI)
+        location /core/ {
+          rewrite ^/core(/.*)$ $1 break;
+          proxy_pass http://core-service-backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "upgrade";
+          proxy_connect_timeout 30s;
+          proxy_send_timeout 30s;
+          proxy_read_timeout 30s;
+          # Enhanced sub_filter for Swagger UI
+          sub_filter '/swagger-ui/' '/core/swagger-ui/';
+          sub_filter 'href="/swagger-ui' 'href="/core/swagger-ui';
+          sub_filter 'src="/swagger-ui' 'src="/core/swagger-ui';
+          sub_filter '"/swagger.json"' '"/core/swagger.json"';  # Rewrite OpenAPI spec URL
+          sub_filter '"/openapi.json"' '"/core/openapi.json"';  # Rewrite OpenAPI spec URL
+          # Add CORS headers
+          add_header Access-Control-Allow-Origin "*";  # Adjust for specific origins
+          add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+          add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range";
+        }
+
+        # Specific handling for Swagger JSON to avoid rewrite issues
+        location = /core/swagger.json {
+          proxy_pass http://core-service-backend/swagger.json;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          add_header Access-Control-Allow-Origin "*";  # Adjust for specific origins
+        }
+
+        location = /core/openapi.json {
+          proxy_pass http://core-service-backend/openapi.json;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          add_header Access-Control-Allow-Origin "*";  # Adjust for specific origins
+        }
+
+        # Manage service routes
+        location /manage/ {
+          rewrite ^/manage(/.*)$ $1 break;
+          proxy_pass http://manage-service-backend;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection "upgrade";
+          proxy_connect_timeout 30s;
+          proxy_send_timeout 30s;
+          proxy_read_timeout 30s;
+          add_header Access-Control-Allow-Origin "*";  # Adjust for specific origins
+          add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+          add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range";
+        }
+
+        # Health check endpoint
+        location /health {
+          return 200 "healthy\n";
+          add_header Content-Type text/plain;
+        }
+      }
         }

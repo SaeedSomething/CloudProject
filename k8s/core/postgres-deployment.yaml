@@ -25,15 +25,15 @@ spec:
                                   - key: topology.kubernetes.io/zone
                                     operator: In
                                     values:
-                                        - bamdad
+                                        # - bamdad
                                         - simin
-                                        - foough
-                podAntiAffinity:
-                    requiredDuringSchedulingIgnoredDuringExecution:
-                        - labelSelector:
-                              matchLabels:
-                                  app: postgres
-                          topologyKey: topology.kubernetes.io/zone
+                                        # - foough
+                # podAntiAffinity:
+                #     requiredDuringSchedulingIgnoredDuringExecution:
+                #         - labelSelector:
+                #               matchLabels:
+                #                   app: postgres
+                #           topologyKey: topology.kubernetes.io/zone
             containers:
                 - name: postgres
                   image: postgres:13.13-bullseye

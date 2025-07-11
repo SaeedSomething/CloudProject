@@ -1,15 +1,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-    name: manage-service-hpa
-    namespace: manage
+    name: manage-hpa
+    namespace: auth
 spec:
     scaleTargetRef:
         apiVersion: apps/v1
         kind: Deployment
         name: manage
     minReplicas: 2
-    maxReplicas: 6
+    maxReplicas: 4
     metrics:
         - type: Resource
           resource:
@@ -23,3 +23,16 @@ spec:
               target:
                   type: Utilization
                   averageUtilization: 80
+    behavior:
+        scaleDown:
+            stabilizationWindowSeconds: 300
+            policies:
+                - type: Percent
+                  value: 50
+                  periodSeconds: 60
+        scaleUp:
+            stabilizationWindowSeconds: 60
+            policies:
+                - type: Percent
+                  value: 100
+                  periodSeconds: 30

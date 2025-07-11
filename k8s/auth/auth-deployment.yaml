@@ -27,14 +27,14 @@ spec:
                                     operator: In
                                     values:
                                         - bamdad
-                                        - simin
-                                        - foough
-                podAntiAffinity:
-                    requiredDuringSchedulingIgnoredDuringExecution:
-                        - labelSelector:
-                              matchLabels:
-                                  app: auth
-                          topologyKey: topology.kubernetes.io/zone
+                                        # - simin
+                                        # - foough
+                # podAntiAffinity:
+                #     requiredDuringSchedulingIgnoredDuringExecution:
+                #         - labelSelector:
+                #               matchLabels:
+                #                   app: auth
+                #           topologyKey: topology.kubernetes.io/zone
             containers:
                 - name: auth
                   image: saeedsomething/project-auth-service:latest

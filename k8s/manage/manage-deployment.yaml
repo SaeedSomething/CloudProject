@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: manage
-    namespace: manage
+    namespace: auth
 spec:
     replicas: 1
     selector:
@@ -25,15 +25,15 @@ spec:
                                   - key: topology.kubernetes.io/zone
                                     operator: In
                                     values:
-                                        - bamdad
-                                        - simin
+                                        # - bamdad
+                                        # - simin
                                         - foough
-                podAntiAffinity:
-                    requiredDuringSchedulingIgnoredDuringExecution:
-                        - labelSelector:
-                              matchLabels:
-                                  app: auth
-                          topologyKey: topology.kubernetes.io/zone
+                # podAntiAffinity:
+                #     requiredDuringSchedulingIgnoredDuringExecution:
+                #         - labelSelector:
+                #               matchLabels:
+                #                   app: auth
+                #           topologyKey: topology.kubernetes.io/zone
             containers:
                 - name: manage
                   image: saeedsomething/project-manage-service:latest
