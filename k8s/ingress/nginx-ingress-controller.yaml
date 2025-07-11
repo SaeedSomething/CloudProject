@@ -1,12 +1,17 @@
 # Nginx Ingress Controller Components - Broken down into separate files:
 # - ingress-nginx-namespace.yaml
-# - nginx-configuration.yaml
+# - nginx-configuration.yaml (includes Swagger UI sub_filter fixes)
 # - tcp-services.yaml
 # - udp-services.yaml
 # - nginx-ingress-controller-deployment.yaml
 # - ingress-nginx-service.yaml
+# - microservices-ingress.yaml (includes Swagger UI path handling)
 
 # This file is kept for reference but the individual files should be used for deployment
+# All Swagger UI routing fixes have been applied to:
+# 1. nginx-configuration.yaml - sub_filter settings
+# 2. microservices-ingress.yaml - configuration snippets and specific paths
+# 3. nginx-configmap.yaml (Phase 4) - comprehensive sub_filter rules
 apiVersion: apps/v1
 kind: Deployment
 metadata:

@@ -255,6 +255,159 @@ kubectl exec -n auth $AUTH_POD -- curl localhost:8082/auth/users
 Write-Host "=== Backup/Restore Test Complete ===" -ForegroundColor Green
 ```
 
+---
+
+## **📚 Swagger UI Testing Strategy**
+
+### **Swagger UI Reverse Proxy Testing**
+
+Due to the complex nature of Swagger UI behind reverse proxies, specific testing is required to ensure all endpoints work correctly.
+
+#### **Phase 4 - Nginx Reverse Proxy Testing:**
+
+```powershell
+# Test Swagger UI accessibility through Nginx
+Write-Host "=== Testing Swagger UI through Nginx Reverse Proxy ===" -ForegroundColor Green
+
+# Get Nginx service endpoint
+$NGINX_IP = kubectl get svc -n nginx-lb nginx-lb-service -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+if (!$NGINX_IP) { $NGINX_IP = "localhost" }
+
+# Test main Swagger UI page
+Write-Host "Testing main Swagger UI page..." -ForegroundColor Yellow
+$swaggerUI = Invoke-WebRequest -Uri "http://$NGINX_IP/core/docs" -UseBasicParsing
+if ($swaggerUI.StatusCode -eq 200) {
+    Write-Host "✓ Swagger UI main page accessible" -ForegroundColor Green
+} else {
+    Write-Host "✗ Swagger UI main page failed" -ForegroundColor Red
+}
+
+# Test Swagger UI assets
+Write-Host "Testing Swagger UI assets..." -ForegroundColor Yellow
+$swaggerAssets = @(
+    "/core/swagger-ui/index.html",
+    "/core/swagger-ui/swagger-ui-bundle.js",
+    "/core/swagger-ui/swagger-ui.css"
+)
+
+foreach ($asset in $swaggerAssets) {
+    try {
+        $response = Invoke-WebRequest -Uri "http://$NGINX_IP$asset" -UseBasicParsing
+        if ($response.StatusCode -eq 200) {
+            Write-Host "✓ Asset $asset accessible" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "✗ Asset $asset failed: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# Test OpenAPI specification endpoints
+Write-Host "Testing OpenAPI specification endpoints..." -ForegroundColor Yellow
+$apiEndpoints = @(
+    "/core/v3/api-docs",
+    "/core/v3/api-docs/swagger-config"
+)
+
+foreach ($endpoint in $apiEndpoints) {
+    try {
+        $response = Invoke-WebRequest -Uri "http://$NGINX_IP$endpoint" -UseBasicParsing
+        if ($response.StatusCode -eq 200) {
+            Write-Host "✓ API docs endpoint $endpoint accessible" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "✗ API docs endpoint $endpoint failed: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# Test if Swagger UI can load the API specification
+Write-Host "Testing API specification loading..." -ForegroundColor Yellow
+try {
+    $apiDocs = Invoke-RestMethod -Uri "http://$NGINX_IP/core/v3/api-docs" -Method Get
+    if ($apiDocs.openapi) {
+        Write-Host "✓ API specification loads correctly (OpenAPI $($apiDocs.openapi))" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "✗ API specification loading failed: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+Write-Host "=== Swagger UI Manual Browser Test ===" -ForegroundColor Cyan
+Write-Host "Please manually test the following URLs in your browser:" -ForegroundColor White
+Write-Host "1. http://$NGINX_IP/core/docs" -ForegroundColor Yellow
+Write-Host "2. http://$NGINX_IP/core/swagger-ui/index.html" -ForegroundColor Yellow
+Write-Host "3. Verify that the 'Explore' button works and shows API endpoints" -ForegroundColor Yellow
+Write-Host "4. Test executing a sample API call (e.g., GET /status)" -ForegroundColor Yellow
+```
+
+#### **Phase 5 - ArvanCloud Ingress Testing:**
+
+```powershell
+# Test Swagger UI accessibility through ArvanCloud Ingress
+Write-Host "=== Testing Swagger UI through ArvanCloud Ingress ===" -ForegroundColor Green
+
+# Get LoadBalancer IP from ArvanCloud
+$LB_IP = kubectl get svc -n ingress-nginx ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+if (!$LB_IP) {
+    Write-Host "⚠️  LoadBalancer IP not yet assigned. Waiting..." -ForegroundColor Yellow
+    Start-Sleep -Seconds 10
+    $LB_IP = kubectl get svc -n ingress-nginx ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+}
+
+Write-Host "Using LoadBalancer IP: $LB_IP" -ForegroundColor Cyan
+
+# Test Swagger UI through Ingress
+$ingressEndpoints = @(
+    "/core/docs",
+    "/core/swagger-ui/index.html",
+    "/core/v3/api-docs",
+    "/core/v3/api-docs/swagger-config"
+)
+
+foreach ($endpoint in $ingressEndpoints) {
+    Write-Host "Testing: http://$LB_IP$endpoint" -ForegroundColor Yellow
+    try {
+        $response = Invoke-WebRequest -Uri "http://$LB_IP$endpoint" -UseBasicParsing -TimeoutSec 30
+        if ($response.StatusCode -eq 200) {
+            Write-Host "✓ $endpoint accessible via Ingress" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "✗ $endpoint failed via Ingress: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# Check if sub_filter is working correctly
+Write-Host "Testing path rewriting functionality..." -ForegroundColor Yellow
+try {
+    $swaggerHTML = Invoke-WebRequest -Uri "http://$LB_IP/core/docs" -UseBasicParsing
+    if ($swaggerHTML.Content -match "/core/swagger-ui") {
+        Write-Host "✓ Path rewriting is working correctly" -ForegroundColor Green
+    } else {
+        Write-Host "⚠️  Path rewriting may not be working properly" -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "✗ Could not verify path rewriting" -ForegroundColor Red
+}
+
+Write-Host "=== Complete Swagger UI Functional Test ===" -ForegroundColor Cyan
+Write-Host "Please perform the following manual tests:" -ForegroundColor White
+Write-Host "1. Open browser to: http://$LB_IP/core/docs" -ForegroundColor Yellow
+Write-Host "2. Verify Swagger UI loads completely with all styles" -ForegroundColor Yellow
+Write-Host "3. Check that all API endpoints are listed" -ForegroundColor Yellow
+Write-Host "4. Test the 'Try it out' functionality on any endpoint" -ForegroundColor Yellow
+Write-Host "5. Verify that API responses are displayed correctly" -ForegroundColor Yellow
+Write-Host "6. Check browser developer tools for any 404 errors on assets" -ForegroundColor Yellow
+
+Write-Host "✅ Swagger UI testing completed!" -ForegroundColor Green
+```
+
+#### **Common Swagger UI Issues and Solutions:**
+
+1. **404 errors on assets:** Fixed by comprehensive sub_filter rules in Nginx config
+2. **Relative path issues:** Fixed by Ingress annotations and configuration snippets  
+3. **API spec not loading:** Fixed by specific handling of `/v3/api-docs` endpoints
+4. **CORS errors:** Fixed by proper CORS headers in both Nginx and Ingress configs
+
+---
+
 #### **3. Manual Testing for Phase 5**
 
 **Service Functionality Test:**

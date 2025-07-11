@@ -163,8 +163,9 @@ Write-Host ""
 Write-Host "Next Steps:" -ForegroundColor Cyan
 Write-Host "1. Wait for LoadBalancer IP assignment" -ForegroundColor White
 Write-Host "2. Test all service endpoints" -ForegroundColor White
-Write-Host "3. Run backup/restore demo: .\scripts\backup-restore-demo.ps1" -ForegroundColor White
-Write-Host "4. Generate load to test HPA scaling" -ForegroundColor White
+Write-Host "3. Test Swagger UI: .\scripts\test-swagger-ui.ps1 -TestMode ingress" -ForegroundColor White
+Write-Host "4. Run backup/restore demo: .\scripts\backup-restore-demo.ps1" -ForegroundColor White
+Write-Host "5. Generate load to test HPA scaling" -ForegroundColor White
 Write-Host ""
 Write-Host "Monitoring Commands:" -ForegroundColor Yellow
 Write-Host "  kubectl get hpa --all-namespaces -w    # Watch HPA scaling" -ForegroundColor White

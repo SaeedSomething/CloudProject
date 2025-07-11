@@ -9,6 +9,13 @@ metadata:
         nginx.ingress.kubernetes.io/use-regex: "true"
         nginx.ingress.kubernetes.io/ssl-redirect: "false"
         nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+        # Swagger UI fixes for proper path handling
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+            sub_filter 'href="/' 'href="/core/';
+            sub_filter 'src="/' 'src="/core/';
+            sub_filter '"/' '"/core/';
+            sub_filter_once off;
+            sub_filter_types *;
 spec:
     rules:
         - http:
@@ -29,7 +36,29 @@ spec:
                             name: manage
                             port:
                                 number: 8080
-                  # Core service routes
+                  # Core service routes - Swagger UI specific paths
+                  - path: /core/docs(/|$)(.*)
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: core
+                            port:
+                                number: 8080
+                  - path: /core/swagger-ui(/|$)(.*)
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: core
+                            port:
+                                number: 8080
+                  - path: /core/v3/api-docs(/|$)(.*)
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: core
+                            port:
+                                number: 8080
+                  # Core service routes - general
                   - path: /core(/|$)(.*)
                     pathType: Prefix
                     backend:
