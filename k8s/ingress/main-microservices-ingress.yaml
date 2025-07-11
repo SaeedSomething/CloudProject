@@ -1,0 +1,64 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: main-microservices-ingress
+    namespace: auth
+    annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+        nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+        # Cross-namespace service routing
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+        # Swagger UI specific configurations
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+            more_set_headers "Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:";
+            more_set_headers "X-Frame-Options: SAMEORIGIN";
+spec:
+    ingressClassName: nginx
+    rules:
+        - host: main-c9a4c1e532-auth.apps.ir-central1.arvancaas.ir
+          http:
+              paths:
+                  # Auth HTTP service
+                  - path: /auth(/|$)(.*)
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: auth-http
+                            port:
+                                number: 8082
+                  # Manage service
+                  - path: /manage(/|$)(.*)
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: manage
+                            port:
+                                number: 8080
+                  # Health service
+                  - path: /health(/|$)(.*)
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: health-service
+                            port:
+                                number: 80
+                  # Core service (cross-namespace - needs ExternalName service or direct routing)
+                  - path: /core(/|$)(.*)
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: core-external
+                            port:
+                                number: 8080
+                  # Root path redirect to health check
+                  - path: /()(.*)
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: health-service
+                            port:
+                                number: 80

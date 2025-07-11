@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: microservices-gateway
+    namespace: auth
+    annotations:
+        nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+        nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+spec:
+    ingressClassName: nginx
+    rules:
+        - host: gateway-c9a4c1e532-auth.apps.ir-central1.arvancaas.ir
+          http:
+              paths:
+                  # Route everything to internal NGINX load balancer
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: nginx-lb-external
+                            port:
+                                number: 80

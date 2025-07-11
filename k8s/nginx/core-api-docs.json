@@ -1,0 +1,931 @@
+{
+	"openapi": "3.0.1",
+	"info": {
+		"title": "OpenAPI definition",
+		"version": "v0"
+	},
+	"servers": [
+		{
+			"url": "http://localhost:30080",
+			"description": " [My Project]"
+		}
+	],
+	"security": [
+		{
+			"Authorization": []
+		},
+		{
+			"Authorization": []
+		}
+	],
+	"tags": [
+		{
+			"name": "Mail",
+			"description": "Mail APIs"
+		},
+		{
+			"name": "MailConfig",
+			"description": "Mail Config APIs"
+		}
+	],
+	"paths": {
+		"/mail": {
+			"post": {
+				"tags": ["Mail"],
+				"summary": "ارسال ایمیل",
+				"operationId": "sendMail",
+				"requestBody": {
+					"description": "اطلاعات ارسال ایمیل",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SendMailRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"*/*": {
+								"schema": {
+									"$ref": "#/components/schemas/GenericResponseSendMailSrv"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "درخواست نامعتبر!"
+					},
+					"401": {
+						"description": "عدم احراز هویت!"
+					},
+					"403": {
+						"description": "دسترسی غیر مجاز!"
+					},
+					"409": {
+						"description": "تکراری!"
+					},
+					"500": {
+						"description": "خطای داخلی سرور!"
+					}
+				}
+			}
+		},
+		"/mail/resend": {
+			"post": {
+				"tags": ["Mail"],
+				"summary": "ارسال مجدد ایمیل های خطا خورده",
+				"operationId": "resend",
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"*/*": {
+								"schema": {
+									"$ref": "#/components/schemas/GenericResponseString"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "درخواست نامعتبر!"
+					},
+					"401": {
+						"description": "عدم احراز هویت!"
+					},
+					"403": {
+						"description": "دسترسی غیر مجاز!"
+					},
+					"409": {
+						"description": "تکراری!"
+					},
+					"500": {
+						"description": "خطای داخلی سرور!"
+					}
+				}
+			}
+		},
+		"/mail/configs": {
+			"get": {
+				"tags": ["MailConfig"],
+				"summary": "دریافت تنظیمات ارسال ایمیل",
+				"operationId": "getMailConfigs",
+				"parameters": [
+					{
+						"name": "offset",
+						"in": "query",
+						"description": "شمماره اولین آیتم (پیشفرض: 0)",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int32",
+							"default": 0
+						},
+						"example": 0
+					},
+					{
+						"name": "size",
+						"in": "query",
+						"description": "تعداد آیتم بازگشتی (پیشفرض: 50)",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int32",
+							"default": 50
+						},
+						"example": 10
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"*/*": {
+								"schema": {
+									"$ref": "#/components/schemas/GenericResponseListMailConfigSrv"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "درخواست نامعتبر!"
+					},
+					"401": {
+						"description": "عدم احراز هویت!"
+					},
+					"403": {
+						"description": "دسترسی غیر مجاز!"
+					},
+					"500": {
+						"description": "خطای داخلی سرور!"
+					}
+				}
+			},
+			"post": {
+				"tags": ["MailConfig"],
+				"summary": "ایجاد تنظیمات ارسال ایمیل",
+				"operationId": "createMailConfig",
+				"requestBody": {
+					"description": "اطلاعات ایجاد تنظیمات ارسال ایمیل",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MailConfigCreateRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"*/*": {
+								"schema": {
+									"$ref": "#/components/schemas/GenericResponseLong"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "درخواست نامعتبر!"
+					},
+					"401": {
+						"description": "عدم احراز هویت!"
+					},
+					"403": {
+						"description": "دسترسی غیر مجاز!"
+					},
+					"409": {
+						"description": "تکراری!"
+					},
+					"500": {
+						"description": "خطای داخلی سرور!"
+					}
+				}
+			}
+		},
+		"/mail/bulk": {
+			"post": {
+				"tags": ["Mail"],
+				"summary": "ارسال ایمیل به صورت بالک",
+				"operationId": "sendBulkMail",
+				"requestBody": {
+					"description": "اطلاعات ارسال ایمیل",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SendMailRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"*/*": {
+								"schema": {
+									"$ref": "#/components/schemas/GenericResponseSendMailSrv"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "درخواست نامعتبر!"
+					},
+					"401": {
+						"description": "عدم احراز هویت!"
+					},
+					"403": {
+						"description": "دسترسی غیر مجاز!"
+					},
+					"409": {
+						"description": "تکراری!"
+					},
+					"500": {
+						"description": "خطای داخلی سرور!"
+					}
+				}
+			}
+		},
+		"/mail/configs/{id}": {
+			"get": {
+				"tags": ["MailConfig"],
+				"summary": "دریافت تنظیمات ارسال ایمیل با شناسه تنظیمات",
+				"operationId": "getMailConfig",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "شناسه تنظیمات ارسال ایمیل",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						},
+						"example": 123
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"*/*": {
+								"schema": {
+									"$ref": "#/components/schemas/GenericResponseMailConfigSrv"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "درخواست نامعتبر!"
+					},
+					"401": {
+						"description": "عدم احراز هویت!"
+					},
+					"403": {
+						"description": "دسترسی غیر مجاز!"
+					},
+					"404": {
+						"description": "پیدا نشد!"
+					},
+					"500": {
+						"description": "خطای داخلی سرور!"
+					}
+				}
+			},
+			"delete": {
+				"tags": ["MailConfig"],
+				"summary": "حذف تنظیمات ارسال ایمیل",
+				"operationId": "deleteMailConfig",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "شناسه تنظیمات ارسال ایمیل",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						},
+						"example": 123
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"*/*": {
+								"schema": {
+									"$ref": "#/components/schemas/GenericResponseLong"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "درخواست نامعتبر!"
+					},
+					"401": {
+						"description": "عدم احراز هویت!"
+					},
+					"403": {
+						"description": "دسترسی غیر مجاز!"
+					},
+					"404": {
+						"description": "پیدا نشد!"
+					},
+					"500": {
+						"description": "خطای داخلی سرور!"
+					}
+				}
+			},
+			"patch": {
+				"tags": ["MailConfig"],
+				"summary": "به روزرسانی تنظیمات ارسال ایمیل",
+				"operationId": "updateMailConfig",
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"description": "شناسه تنظیمات ارسال ایمیل",
+						"required": true,
+						"schema": {
+							"type": "integer",
+							"format": "int64"
+						},
+						"example": 123
+					}
+				],
+				"requestBody": {
+					"description": "اطلاعات به روزرسانی تنظیمات ارسال ایمیل",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MailConfigUpdateRequest"
+							}
+						}
+					},
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"*/*": {
+								"schema": {
+									"$ref": "#/components/schemas/GenericResponseLong"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "درخواست نامعتبر!"
+					},
+					"401": {
+						"description": "عدم احراز هویت!"
+					},
+					"403": {
+						"description": "دسترسی غیر مجاز!"
+					},
+					"404": {
+						"description": "پیدا نشد!"
+					},
+					"409": {
+						"description": "تکراری!"
+					},
+					"500": {
+						"description": "خطای داخلی سرور!"
+					}
+				}
+			}
+		},
+		"/mail/requests": {
+			"get": {
+				"tags": ["Mail"],
+				"summary": "ارسال مجدد ایمیل های خطا خورده",
+				"operationId": "getSentMails",
+				"parameters": [
+					{
+						"name": "size",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int32",
+							"default": 0
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "integer",
+							"format": "int32",
+							"default": 0
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"*/*": {
+								"schema": {
+									"$ref": "#/components/schemas/GenericResponseListMailRequestSrv"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "درخواست نامعتبر!"
+					},
+					"401": {
+						"description": "عدم احراز هویت!"
+					},
+					"403": {
+						"description": "دسترسی غیر مجاز!"
+					},
+					"409": {
+						"description": "تکراری!"
+					},
+					"500": {
+						"description": "خطای داخلی سرور!"
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"schemas": {
+			"SendMailRequest": {
+				"required": ["content", "serviceName", "subject"],
+				"type": "object",
+				"properties": {
+					"serviceName": {
+						"type": "string"
+					},
+					"content": {
+						"type": "string"
+					},
+					"plainText": {
+						"type": "string"
+					},
+					"subject": {
+						"type": "string"
+					},
+					"replayAddress": {
+						"type": "string"
+					},
+					"cc": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"bcc": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"fileHashes": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"to": {
+						"maxItems": 2147483647,
+						"minItems": 1,
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"resend": {
+						"type": "boolean"
+					}
+				}
+			},
+			"GenericResponseSendMailSrv": {
+				"type": "object",
+				"properties": {
+					"hasError": {
+						"type": "boolean"
+					},
+					"errorDescription": {
+						"type": "string"
+					},
+					"errorCode": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"message": {
+						"type": "string"
+					},
+					"content": {
+						"$ref": "#/components/schemas/SendMailSrv"
+					},
+					"totalCount": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"trackerId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"price": {
+						"type": "number",
+						"format": "double"
+					}
+				}
+			},
+			"SendMailSrv": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"messageIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"GenericResponseString": {
+				"type": "object",
+				"properties": {
+					"hasError": {
+						"type": "boolean"
+					},
+					"errorDescription": {
+						"type": "string"
+					},
+					"errorCode": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"message": {
+						"type": "string"
+					},
+					"content": {
+						"type": "string"
+					},
+					"totalCount": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"trackerId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"price": {
+						"type": "number",
+						"format": "double"
+					}
+				}
+			},
+			"MailConfigCreateRequest": {
+				"required": [
+					"mailAddress",
+					"mailPassword",
+					"serviceName",
+					"smtpHostAddress",
+					"smtpPort"
+				],
+				"type": "object",
+				"properties": {
+					"serviceName": {
+						"type": "string",
+						"description": "نام سرویس"
+					},
+					"smtpHostAddress": {
+						"type": "string",
+						"description": "آدرس هاست smtp"
+					},
+					"smtpPort": {
+						"type": "integer",
+						"description": "پورت smtp",
+						"format": "int32"
+					},
+					"mailAddress": {
+						"type": "string",
+						"description": "آدرس ایمیل"
+					},
+					"mailPassword": {
+						"type": "string",
+						"description": "رمزعبور ایمیل"
+					}
+				}
+			},
+			"GenericResponseLong": {
+				"type": "object",
+				"properties": {
+					"hasError": {
+						"type": "boolean"
+					},
+					"errorDescription": {
+						"type": "string"
+					},
+					"errorCode": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"message": {
+						"type": "string"
+					},
+					"content": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"totalCount": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"trackerId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"price": {
+						"type": "number",
+						"format": "double"
+					}
+				}
+			},
+			"MailConfigUpdateRequest": {
+				"type": "object",
+				"properties": {
+					"smtpHostAddress": {
+						"type": "string",
+						"description": "آدرس هاست smtp"
+					},
+					"smtpPort": {
+						"type": "integer",
+						"description": "پورت smtp",
+						"format": "int32"
+					},
+					"mailAddress": {
+						"type": "string",
+						"description": "آدرس ایمیل"
+					},
+					"oldPassword": {
+						"type": "string",
+						"description": "رمزعبور قدیمی ایمیل"
+					},
+					"newPassword": {
+						"type": "string",
+						"description": "رمزعبور جدید ایمیل"
+					}
+				}
+			},
+			"GenericResponseListMailRequestSrv": {
+				"type": "object",
+				"properties": {
+					"hasError": {
+						"type": "boolean"
+					},
+					"errorDescription": {
+						"type": "string"
+					},
+					"errorCode": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"message": {
+						"type": "string"
+					},
+					"content": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/MailRequestSrv"
+						}
+					},
+					"totalCount": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"trackerId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"price": {
+						"type": "number",
+						"format": "double"
+					}
+				}
+			},
+			"MailItemSrv": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"insertTimestamp": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"updateTimestamp": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"requestState": {
+						"type": "string",
+						"enum": [
+							"SENT",
+							"NOT_SENT",
+							"SCHEDULED",
+							"QUEUED",
+							"EXPIRED",
+							"PROVIDER_ERROR",
+							"INVALID_DATA",
+							"DATA_ERROR",
+							"INTERNAL_ERROR",
+							"RESEND_QUEUE",
+							"EXCEED_LIMITATION"
+						]
+					},
+					"receiver": {
+						"type": "string"
+					},
+					"sendDateTimestamp": {
+						"type": "integer",
+						"format": "int64"
+					}
+				}
+			},
+			"MailRequestSrv": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"insertTimestamp": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"updateTimestamp": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"items": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/MailItemSrv"
+						}
+					},
+					"requestId": {
+						"type": "string"
+					},
+					"configName": {
+						"type": "string"
+					},
+					"content": {
+						"type": "string"
+					},
+					"plainText": {
+						"type": "string"
+					},
+					"subject": {
+						"type": "string"
+					}
+				}
+			},
+			"GenericResponseListMailConfigSrv": {
+				"type": "object",
+				"properties": {
+					"hasError": {
+						"type": "boolean"
+					},
+					"errorDescription": {
+						"type": "string"
+					},
+					"errorCode": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"message": {
+						"type": "string"
+					},
+					"content": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/MailConfigSrv"
+						}
+					},
+					"totalCount": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"trackerId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"price": {
+						"type": "number",
+						"format": "double"
+					}
+				}
+			},
+			"MailConfigSrv": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"insertTimestamp": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"updateTimestamp": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"serviceName": {
+						"type": "string"
+					},
+					"smtpHostAddress": {
+						"type": "string"
+					},
+					"smtpPort": {
+						"type": "string"
+					},
+					"mailAddress": {
+						"type": "string"
+					}
+				}
+			},
+			"GenericResponseMailConfigSrv": {
+				"type": "object",
+				"properties": {
+					"hasError": {
+						"type": "boolean"
+					},
+					"errorDescription": {
+						"type": "string"
+					},
+					"errorCode": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"message": {
+						"type": "string"
+					},
+					"content": {
+						"$ref": "#/components/schemas/MailConfigSrv"
+					},
+					"totalCount": {
+						"type": "integer",
+						"format": "int64"
+					},
+					"trackerId": {
+						"type": "string"
+					},
+					"status": {
+						"type": "integer",
+						"format": "int32"
+					},
+					"price": {
+						"type": "number",
+						"format": "double"
+					}
+				}
+			}
+		},
+		"securitySchemes": {
+			"Authorization": {
+				"type": "apiKey",
+				"name": "Authorization",
+				"in": "header"
+			}
+		}
+	}
+}

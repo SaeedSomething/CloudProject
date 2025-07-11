@@ -61,13 +61,13 @@ spec:
                   volumeMounts:
                       - name: mysql-data
                         mountPath: /var/lib/mysql
-                  resources:
-                      requests:
-                          cpu: 1
-                          memory: 1Gi
-                      limits:
-                          cpu: 2
-                          memory: 2Gi
+                #   resources:
+                #       requests:
+                #           cpu: 1
+                #           memory: 1Gi
+                #       limits:
+                #           cpu: 1
+                #           memory: 1Gi
             volumes:
                 - name: mysql-data
                   persistentVolumeClaim:

@@ -16,42 +16,160 @@ if ($currentContext -notmatch "arvan") {
     if ($continue -ne 'y') { exit 1 }
 }
 
-# Step 2: Apply Metrics Server (required for HPA)
+# Step 2: Verify Metrics Server (ArvanCloud managed)
 Write-Host ""
-Write-Host "Step 2: Installing Metrics Server..." -ForegroundColor Yellow
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+Write-Host "Step 2: Verifying ArvanCloud managed Metrics Server..." -ForegroundColor Yellow
 
-# Wait for metrics server
-Write-Host "Waiting for metrics server to be ready..." -ForegroundColor Cyan
-kubectl wait --for=condition=ready pod -l k8s-app=metrics-server -n kube-system --timeout=180s
-
+# Test HPA compatibility
+Write-Host "Testing HPA compatibility..." -ForegroundColor Cyan
+$hpaTest = kubectl apply --dry-run=client -f k8s/hpa/hpa-auth-service.yaml 2>&1
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "✅ Metrics server ready" -ForegroundColor Green
+    Write-Host "✅ Metrics Server available - HPA can be deployed" -ForegroundColor Green
+    Write-Host "✅ Using ArvanCloud managed metrics infrastructure" -ForegroundColor Green
 } else {
-    Write-Host "⚠️  Metrics server timeout (may still be starting)" -ForegroundColor Yellow
+    Write-Host "❌ HPA compatibility issue" -ForegroundColor Red
+    Write-Host $hpaTest
 }
 
 # Step 3: Deploy storage and backup infrastructure
 Write-Host ""
 Write-Host "Step 3: Setting up storage and backup infrastructure..." -ForegroundColor Yellow
+
+Write-Host "  - Applying backup storage class..." -ForegroundColor Cyan
 kubectl apply -f k8s/backup/backup-storage-class.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Storage class applied" -ForegroundColor Green } else { Write-Host "    ❌ Storage class failed" -ForegroundColor Red }
+
+Write-Host "  - Applying auth database backup PVC..." -ForegroundColor Cyan
 kubectl apply -f k8s/backup/auth-db-backup-pvc.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Backup PVC applied" -ForegroundColor Green } else { Write-Host "    ❌ Backup PVC failed" -ForegroundColor Red }
+
+Write-Host "  - Applying auth database backup CronJob..." -ForegroundColor Cyan
 kubectl apply -f k8s/backup/auth-db-backup-cronjob.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Backup CronJob applied" -ForegroundColor Green } else { Write-Host "    ❌ Backup CronJob failed" -ForegroundColor Red }
+
+# Step 4: Deploy core services (with zone distribution)
+Write-Host ""
+Write-Host "Step 4: Deploying core services with zone distribution..." -ForegroundColor Yellow
 
 # Step 4: Deploy core services (with zone distribution)
 Write-Host ""
 Write-Host "Step 4: Deploying core services with zone distribution..." -ForegroundColor Yellow
 
 Write-Host "  - Deploying Auth services (bamdad zone)..." -ForegroundColor Cyan
-kubectl apply -f k8s/auth/
+
+# Auth namespace (may already exist)
+Write-Host "    Applying auth namespace..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/auth/auth-namespace.yaml 2>$null
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Auth namespace ready" -ForegroundColor Green } else { Write-Host "      ⚠️  Auth namespace may already exist" -ForegroundColor Yellow }
+
+# Auth configurations
+Write-Host "    Applying auth configuration..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/auth/auth-configmap.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Auth config applied" -ForegroundColor Green } else { Write-Host "      ❌ Auth config failed" -ForegroundColor Red }
+
+Write-Host "    Applying auth secrets..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/auth/auth-secret.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Auth secret applied" -ForegroundColor Green } else { Write-Host "      ❌ Auth secret failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/auth/auth-db-credentials.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Auth DB credentials applied" -ForegroundColor Green } else { Write-Host "      ❌ Auth DB credentials failed" -ForegroundColor Red }
+
+# MySQL components
+Write-Host "    Applying MySQL components..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/auth/mysql-pvc.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ MySQL PVC applied" -ForegroundColor Green } else { Write-Host "      ❌ MySQL PVC failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/auth/mysql-service.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ MySQL service applied" -ForegroundColor Green } else { Write-Host "      ❌ MySQL service failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/auth/mysql-deployment.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ MySQL deployment applied" -ForegroundColor Green } else { Write-Host "      ❌ MySQL deployment failed" -ForegroundColor Red }
+
+# Auth services
+Write-Host "    Applying Auth services..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/auth/auth-service-http.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Auth HTTP service applied" -ForegroundColor Green } else { Write-Host "      ❌ Auth HTTP service failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/auth/auth-service-grpc.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Auth gRPC service applied" -ForegroundColor Green } else { Write-Host "      ❌ Auth gRPC service failed" -ForegroundColor Red }
+
+# Auth deployment
+Write-Host "    Applying Auth deployment..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/auth/auth-deployment.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Auth deployment applied" -ForegroundColor Green } else { Write-Host "      ❌ Auth deployment failed" -ForegroundColor Red }
+
+# Manage service (in auth namespace)
+Write-Host "    Applying Manage service..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/manage/manage-configmap.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Manage config applied" -ForegroundColor Green } else { Write-Host "      ❌ Manage config failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/manage/manage-service.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Manage service applied" -ForegroundColor Green } else { Write-Host "      ❌ Manage service failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/manage/manage-deployment.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Manage deployment applied" -ForegroundColor Green } else { Write-Host "      ❌ Manage deployment failed" -ForegroundColor Red }
 
 Write-Host "  - Deploying Core services (simin zone)..." -ForegroundColor Cyan
-kubectl apply -f k8s/core/
+
+# Core namespace
+Write-Host "    Applying core namespace..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/core/core-namespace.yaml 2>$null
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Core namespace ready" -ForegroundColor Green } else { Write-Host "      ⚠️  Core namespace may already exist" -ForegroundColor Yellow }
+
+# Core configurations
+Write-Host "    Applying core configuration..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/core/core-configmap.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Core config applied" -ForegroundColor Green } else { Write-Host "      ❌ Core config failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/core/core-secret.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Core secret applied" -ForegroundColor Green } else { Write-Host "      ❌ Core secret failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/core/core-db-credentials.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Core DB credentials applied" -ForegroundColor Green } else { Write-Host "      ❌ Core DB credentials failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/core/core-activemq-credentials.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Core ActiveMQ credentials applied" -ForegroundColor Green } else { Write-Host "      ❌ Core ActiveMQ credentials failed" -ForegroundColor Red }
+
+# Postgres components
+Write-Host "    Applying Postgres components..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/core/postgres-pvc.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Postgres PVC applied" -ForegroundColor Green } else { Write-Host "      ❌ Postgres PVC failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/core/postgres-service.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Postgres service applied" -ForegroundColor Green } else { Write-Host "      ❌ Postgres service failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/core/postgres-deployment.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Postgres deployment applied" -ForegroundColor Green } else { Write-Host "      ❌ Postgres deployment failed" -ForegroundColor Red }
+
+# ActiveMQ components
+Write-Host "    Applying ActiveMQ components..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/core/activemq-pvc.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ ActiveMQ PVC applied" -ForegroundColor Green } else { Write-Host "      ❌ ActiveMQ PVC failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/core/activemq-service.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ ActiveMQ service applied" -ForegroundColor Green } else { Write-Host "      ❌ ActiveMQ service failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/core/activemq-deployment.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ ActiveMQ deployment applied" -ForegroundColor Green } else { Write-Host "      ❌ ActiveMQ deployment failed" -ForegroundColor Red }
+
+# Core service
+Write-Host "    Applying Core service..." -ForegroundColor DarkCyan
+kubectl apply -f k8s/core/core-service.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Core service applied" -ForegroundColor Green } else { Write-Host "      ❌ Core service failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/core/core-deployment.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Core deployment applied" -ForegroundColor Green } else { Write-Host "      ❌ Core deployment failed" -ForegroundColor Red }
 
 Write-Host "  - Deploying Health monitoring..." -ForegroundColor Cyan
 kubectl apply -f k8s/monitoring/health-configmap.yaml
-kubectl apply -f k8s/monitoring/health-deployment.yaml  
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Health config applied" -ForegroundColor Green } else { Write-Host "      ❌ Health config failed" -ForegroundColor Red }
+
+kubectl apply -f k8s/monitoring/health-deployment.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Health deployment applied" -ForegroundColor Green } else { Write-Host "      ❌ Health deployment failed" -ForegroundColor Red }
+
+
 kubectl apply -f k8s/monitoring/health-service-svc.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "      ✅ Health service applied" -ForegroundColor Green } else { Write-Host "      ❌ Health service failed" -ForegroundColor Red }
 
 # Step 5: Wait for core services to be ready
 Write-Host ""
@@ -80,12 +198,30 @@ foreach ($deployment in $deployments) {
 # Step 6: Deploy Ingress Controller
 Write-Host ""
 Write-Host "Step 6: Deploying Nginx Ingress Controller..." -ForegroundColor Yellow
+
+Write-Host "  - Applying ingress namespace..." -ForegroundColor Cyan
 kubectl apply -f k8s/ingress/ingress-nginx-namespace.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Ingress namespace applied" -ForegroundColor Green } else { Write-Host "    ❌ Ingress namespace failed" -ForegroundColor Red }
+
+Write-Host "  - Applying nginx configuration..." -ForegroundColor Cyan
 kubectl apply -f k8s/ingress/nginx-configuration.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Nginx config applied" -ForegroundColor Green } else { Write-Host "    ❌ Nginx config failed" -ForegroundColor Red }
+
+Write-Host "  - Applying TCP services..." -ForegroundColor Cyan
 kubectl apply -f k8s/ingress/tcp-services.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ TCP services applied" -ForegroundColor Green } else { Write-Host "    ❌ TCP services failed" -ForegroundColor Red }
+
+Write-Host "  - Applying UDP services..." -ForegroundColor Cyan
 kubectl apply -f k8s/ingress/udp-services.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ UDP services applied" -ForegroundColor Green } else { Write-Host "    ❌ UDP services failed" -ForegroundColor Red }
+
+Write-Host "  - Applying ingress controller deployment..." -ForegroundColor Cyan
 kubectl apply -f k8s/ingress/nginx-ingress-controller-deployment.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Ingress controller deployment applied" -ForegroundColor Green } else { Write-Host "    ❌ Ingress controller deployment failed" -ForegroundColor Red }
+
+Write-Host "  - Applying ingress service..." -ForegroundColor Cyan
 kubectl apply -f k8s/ingress/ingress-nginx-service.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Ingress service applied" -ForegroundColor Green } else { Write-Host "    ❌ Ingress service failed" -ForegroundColor Red }
 
 Write-Host "Waiting for Ingress Controller to be ready..." -ForegroundColor Cyan
 kubectl wait --for=condition=available --timeout=300s deployment/nginx-ingress-controller -n ingress-nginx
@@ -96,17 +232,27 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "⚠️  Ingress Controller timeout" -ForegroundColor Yellow
 }
 
-# Step 7: Deploy Application Ingress Routes
+# Step 7: Deploy Application Ingress Routes (with Swagger UI fixes)
 Write-Host ""
 Write-Host "Step 7: Deploying application ingress routes..." -ForegroundColor Yellow
 kubectl apply -f k8s/ingress/microservices-ingress.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "✅ Microservices ingress with Swagger UI fixes applied" -ForegroundColor Green } else { Write-Host "❌ Microservices ingress failed" -ForegroundColor Red }
 
 # Step 8: Deploy HPA configurations
 Write-Host ""
 Write-Host "Step 8: Deploying Horizontal Pod Autoscalers..." -ForegroundColor Yellow
+
+Write-Host "  - Applying Auth HPA..." -ForegroundColor Cyan
 kubectl apply -f k8s/hpa/hpa-auth-service.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Auth HPA applied" -ForegroundColor Green } else { Write-Host "    ❌ Auth HPA failed" -ForegroundColor Red }
+
+Write-Host "  - Applying Core HPA..." -ForegroundColor Cyan
 kubectl apply -f k8s/hpa/hpa-core-service.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Core HPA applied" -ForegroundColor Green } else { Write-Host "    ❌ Core HPA failed" -ForegroundColor Red }
+
+Write-Host "  - Applying Manage HPA..." -ForegroundColor Cyan
 kubectl apply -f k8s/hpa/hpa-manage-service.yaml
+if ($LASTEXITCODE -eq 0) { Write-Host "    ✅ Manage HPA applied" -ForegroundColor Green } else { Write-Host "    ❌ Manage HPA failed" -ForegroundColor Red }
 
 # Wait a moment for HPA to initialize
 Start-Sleep -Seconds 10

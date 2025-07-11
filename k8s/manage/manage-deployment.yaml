@@ -25,9 +25,9 @@ spec:
                                   - key: topology.kubernetes.io/zone
                                     operator: In
                                     values:
-                                        # - bamdad
+                                        - bamdad
                                         # - simin
-                                        - foough
+                                        # - foough
                 # podAntiAffinity:
                 #     requiredDuringSchedulingIgnoredDuringExecution:
                 #         - labelSelector:
@@ -40,11 +40,35 @@ spec:
                   imagePullPolicy: Always
                   ports:
                       - containerPort: 8080
-                  volumeMounts:
-                      - name: config-volume
-                        mountPath: /app/app.env
-                        subPath: app.env
-            volumes:
-                - name: config-volume
-                  configMap:
-                      name: manage-configmap
+                  env:
+                      # non-sensitive
+                      - name: DB_HOST
+                        valueFrom:
+                            configMapKeyRef:
+                                name: manage-configmap
+                                key: DB_HOST
+                      - name: DB_PORT
+                        valueFrom:
+                            configMapKeyRef:
+                                name: manage-configmap
+                                key: DB_PORT
+                      - name: DB_USER
+                        valueFrom:
+                            configMapKeyRef:
+                                name: manage-configmap
+                                key: DB_USER
+                      - name: DB_PASSWORD
+                        valueFrom:
+                            configMapKeyRef:
+                                name: manage-configmap
+                                key: DB_PASSWORD
+                      - name: DB_NAME
+                        valueFrom:
+                            configMapKeyRef:
+                                name: manage-configmap
+                                key: DB_NAME
+                      - name: SERVER_PORT
+                        valueFrom:
+                            configMapKeyRef:
+                                name: manage-configmap
+                                key: SERVER_PORT
