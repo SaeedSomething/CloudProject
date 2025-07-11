@@ -37,7 +37,7 @@ kubectl apply -f k8s/auth/auth-secret.yaml
 kubectl apply -f k8s/auth/auth-db-credentials.yaml
 kubectl apply -f k8s/auth/mysql-pvc.yaml 
 kubectl apply -f k8s/auth/mysql-deployment.yaml 
-kubectl apply -f k8s/auth/mysql-service.yaml
+kubectl apply -f k8s/auth/mysql-service.yaml 
 kubectl apply -f k8s/auth/auth-deployment.yaml 
 kubectl apply -f k8s/auth/auth-service-http.yaml 
 kubectl apply -f k8s/auth/auth-service-grpc.yaml

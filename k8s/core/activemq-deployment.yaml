@@ -2,45 +2,65 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: activemq
-  namespace: core
+    name: activemq
+    namespace: core
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: activemq
-  template:
-    metadata:
-      labels:
-        app: activemq
-    spec:
-
-      containers:
-      - name: activemq
-        image: webcenter/activemq
-        env:
-        - name: ACTIVEMQ_ADMIN_LOGIN
-          valueFrom:
-            secretKeyRef:
-              name: core-activemq-credentials
-              key: ACTIVEMQ_USER
-        - name: ACTIVEMQ_ADMIN_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: core-activemq-credentials
-              key: ACTIVEMQ_PASS
-        - name: ACTIVEMQ_KEY
-          valueFrom:
-            secretKeyRef:
-              name: core-activemq-credentials
-              key: ACTIVEMQ_KEY
-        ports:
-        - containerPort: 61616   # JMS port
-        - containerPort: 8161    # web console, if needed
-        volumeMounts:
-        - name: activemq-data
-          mountPath: /opt/apache-activemq/data
-      volumes:
-      - name: activemq-data
-        persistentVolumeClaim:
-          claimName: activemq-pvc
+    replicas: 1
+    selector:
+        matchLabels:
+            app: activemq
+    template:
+        metadata:
+            labels:
+                app: activemq
+        spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                            - matchExpressions:
+                                  - key: node-role.kubernetes.io/cloud-container-g2
+                                    operator: In
+                                    values:
+                                        - "true"
+                                  - key: topology.kubernetes.io/zone
+                                    operator: In
+                                    values:
+                                        - bamdad
+                                        - simin
+                                        - foough
+                podAntiAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        - labelSelector:
+                              matchLabels:
+                                  app: activemq
+                          topologyKey: topology.kubernetes.io/zone
+            containers:
+                - name: activemq
+                  image: webcenter/activemq
+                  env:
+                      - name: ACTIVEMQ_ADMIN_LOGIN
+                        valueFrom:
+                            secretKeyRef:
+                                name: core-activemq-credentials
+                                key: ACTIVEMQ_USER
+                      - name: ACTIVEMQ_ADMIN_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: core-activemq-credentials
+                                key: ACTIVEMQ_PASS
+                      - name: ACTIVEMQ_KEY
+                        valueFrom:
+                            secretKeyRef:
+                                name: core-activemq-credentials
+                                key: ACTIVEMQ_KEY
+                  ports:
+                      - containerPort: 61616 # JMS port
+                      - containerPort: 8161 # web console, if needed
+                  volumeMounts:
+                      - name: activemq-data
+                        mountPath: /opt/apache-activemq/data
+            volumes:
+                - name: activemq-data
+                  persistentVolumeClaim:
+                      claimName: activemq-pvc

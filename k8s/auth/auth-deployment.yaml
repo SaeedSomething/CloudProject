@@ -14,10 +14,31 @@ spec:
             labels:
                 app: auth
         spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                            - matchExpressions:
+                                  - key: node-role.kubernetes.io/cloud-container-g2
+                                    operator: In
+                                    values:
+                                        - "true"
+                                  - key: topology.kubernetes.io/zone
+                                    operator: In
+                                    values:
+                                        - bamdad
+                                        - simin
+                                        - foough
+                podAntiAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        - labelSelector:
+                              matchLabels:
+                                  app: auth
+                          topologyKey: topology.kubernetes.io/zone
             containers:
                 - name: auth
-                  image: project-auth-service
-                  imagePullPolicy: Never
+                  image: saeedsomething/project-auth-service:latest
+                  imagePullPolicy: Always
                   ports:
                       - name: http
                         containerPort: 8082
@@ -75,10 +96,10 @@ spec:
                             secretKeyRef:
                                 name: auth-db-credentials
                                 key: DB_PASS
-                  resources:
-                      requests:
-                          memory: "128Mi"
-                          cpu: "125m"
-                      limits:
-                          memory: "256Mi"
-                          cpu: "250m"
+                #   resources:
+                #       requests:
+                #           memory: "128Mi"
+                #           cpu: "125m"
+                #       limits:
+                #           memory: "128Mi"
+                #           cpu: "125m"

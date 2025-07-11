@@ -1,29 +1,50 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: manage
-  namespace: manage
+    name: manage
+    namespace: manage
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: manage
-  template:
-    metadata:
-      labels:
-        app: manage
-    spec:
-      containers:
-      - name: manage
-        image: project-manage-service:latest
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 8080
-        volumeMounts:
-        - name: config-volume
-          mountPath: /app/app.env
-          subPath: app.env
-      volumes:
-      - name: config-volume
-        configMap:
-          name: manage-configmap
+    replicas: 1
+    selector:
+        matchLabels:
+            app: manage
+    template:
+        metadata:
+            labels:
+                app: manage
+        spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                            - matchExpressions:
+                                  - key: node-role.kubernetes.io/cloud-container-g2
+                                    operator: In
+                                    values:
+                                        - "true"
+                                  - key: topology.kubernetes.io/zone
+                                    operator: In
+                                    values:
+                                        - bamdad
+                                        - simin
+                                        - foough
+                podAntiAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        - labelSelector:
+                              matchLabels:
+                                  app: auth
+                          topologyKey: topology.kubernetes.io/zone
+            containers:
+                - name: manage
+                  image: saeedsomething/project-manage-service:latest
+                  imagePullPolicy: Always
+                  ports:
+                      - containerPort: 8080
+                  volumeMounts:
+                      - name: config-volume
+                        mountPath: /app/app.env
+                        subPath: app.env
+            volumes:
+                - name: config-volume
+                  configMap:
+                      name: manage-configmap

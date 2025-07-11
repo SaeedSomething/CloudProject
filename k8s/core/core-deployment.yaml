@@ -14,16 +14,38 @@ spec:
             labels:
                 app: core
         spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                            - matchExpressions:
+                                  - key: node-role.kubernetes.io/cloud-container-g2
+                                    operator: In
+                                    values:
+                                        - "true"
+                                  - key: topology.kubernetes.io/zone
+                                    operator: In
+                                    values:
+                                        - bamdad
+                                        - simin
+                                        - foough
+                podAntiAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        - labelSelector:
+                              matchLabels:
+                                  app: core
+                          topologyKey: topology.kubernetes.io/zone
             containers:
                 - name: core
-                  image: project-core-service
-                  imagePullPolicy: Never
+                  image: saeedsomething/project-core-service:latest
+                  imagePullPolicy: Always
+                  securityContext:
+                      privileged: false
                   ports:
                       - containerPort: 8080
                   envFrom:
                       - configMapRef:
                             name: core-config
-
                   env:
                       - name: PROJECT_DATASOURCE_USERNAME
                         valueFrom:
@@ -51,11 +73,13 @@ spec:
                             secretKeyRef:
                                 name: core-activemq-credentials
                                 key: ACTIVEMQ_USER
+                      - name: JAVA_TOOL_OPTIONS
+                        value: "-XX:-UseContainerSupport -Djdk.disable.cgroup=true -Dcom.sun.management.jmxremote=false"
 
-                  resources:
-                      requests:
-                          memory: "256Mi"
-                          cpu: "250m"
-                      limits:
-                          memory: "500Mi"
-                          cpu: "500m"
+                #   resources:
+                #       requests:
+                #           memory: "256Mi"
+                #           cpu: "250m"
+                #       limits:
+                #           memory: "500Mi"
+                #           cpu: "500m"

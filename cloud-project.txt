@@ -1,27 +1,134 @@
-Phase 2 – Kubernetes (2 point) 
-In this phase, the project will migrate from Docker Compose to Kubernetes for improved scalability 
-and management. The previous docker-compose.yml file is no longer applicable, and all project 
-configurations must be defined within Kubernetes YAML manifests. 
-Step 1 – Install Kubernetes: For setting up the Kubernetes cluster, Kind is the preferred tool, but 
-alternative solutions are also acceptable. 
-Step 2 – The following conditions must be met in this phase: 
-• The Kubernetes cluster must consist of at least three nodes: one master node and two worker 
-nodes. 
-• Deploy all services and applications using Kubernetes Deployments, Pods, Services, ... . 
-• Each service and its corresponding database must be organized into separate namespaces. 
-• Utilize ConfigMaps to store and manage environment variables and configuration settings. 
-• Secure sensitive credentials, such as database usernames and passwords, using Secrets. 
-• Database access must be restricted to within the Kubernetes cluster. 
-• Ensure data persistence by preventing database data loss after restarting. This should be 
-achieved by utilizing Volumes, implementing Persistent Volume Claims (PVCs) and 
-Persistent Volumes (PVs) for deployments. 
-• Set resource limits for each service to control RAM and CPU usage efficiently. 
-• Each Deployment must be scheduled on a dedicated node, ensuring proper distribution across 
-the cluster. 
-• All the networking that was implemented in Docker in the previous phase must also be 
-maintained in this phase.  
-• Do not place all Kubernetes yml configuration in a single file. 
+
+8
  
-Recommended Resource 
-• kind 
-• Kubernetes 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Cloud Computing Course 
+Project – Dockerize, Kubernetes, Micro Services, Services and Cloud   
+Ferdowsi University of Mashhad (FUM) 
+ 
+Course Professor: 
+Dr. Saeid Abrishami 
+ 
+Teaching Assistants:  
+Mobin Tasnimi                Mohsen Gholami 
+Saeid Rahmani 
+  
+Cloud Computing – Winter 2025 – CE – FUM 
+Ferdowsi University 
+ of Mashhad 
+1949 
+Ferdowsi University of Mashhad – Faculty of Engineering  
+Cloud Computing – Project 
+ 
+  
+6 | P a g e  
+ 
+Phase 3 – Add your Micro Service (2 point) 
+In Phase Three, you are required to add your microservice to the project. This microservice must 
+implement a RESTful API in any programming language of your choice. The microservice should 
+manage authentication in a straightforward manner, which means it must include the following 
+endpoints: 
+1. GET /auth/users: This endpoint should return to a paginated list of all users who have 
+registered in the system. 
+2. DELETE /auth/user: This endpoint should accept either an email or user ID as a parameter 
+and delete the specified user from the database (handle exceptions). 
+Response must be in JSON format, also your service must have access to the auth database within a 
+separate network and should not be able to access any other services. 
+Additionally, your service must be deployed alongside the other services of this project in a 
+Kubernetes environment. The API should be accessible from outside the cluster. The choice of 
+programming language, configuration, port, and other settings is at your discretion. 
+ 
+Deadline 
+• 3rd Khordad 
+Delivery  
+• Upload your microservice files (contain new dockerfile & ymls) on VU 
+• Upload a short video (max 5 min) and show project works 
+▪ Test and show project URLs works 
+▪ Short overview of your microservice 
+▪ Show new pods, services, deployments, ... by details 
+▪ In your microservice ping all DBs and other microservices 
+In-person delivery  
+• The time of the in-person presentation will be announced. 
+ 
+You are free to use ChatGPT or any other AI, but you are expected to learn. 
+ 
+  
+Ferdowsi University of Mashhad – Faculty of Engineering  
+Cloud Computing – Project 
+ 
+  
+7 | P a g e  
+ 
+Phase 4 – HA proxy, Nginx and Auto scalable (2 point) 
+Step 1 – To ensure that the services can handle high loads and to prevent service failures, implement 
+automatic scaling for your microservices. This means that the services should automatically scale up 
+when they reach a specified high load threshold and scale down when the load decreases (No need to 
+scale the database). 
+Step 2 – For load distribution among the scaled services and to ensure access to the services, utilize an 
+internal NGINX instance with a custom routing configuration. This will help manage incoming 
+requests and distribute them evenly across the available instances of the services. 
+Step 3 – To enhance system resilience against increased load or potential failures, increase the number 
+of master nodes to two. Use external HAProxy to manage load balancing and synchronization 
+between the master nodes effectively. 
+In this phase, the scaling thresholds and custom routing configurations are your responsibility, and 
+you have the discretion to determine the parameters based on your project's needs. 
+ 
+ 
+Deadline 
+• 23rd Khordad 
+Delivery  
+• Upload your yml files on VU 
+• Upload a short video (max 10 min) and show project works  
+▪ Test and show project URLs works 
+▪ Show all pods, services, deployments, nodes, ... by details 
+▪ Explain Nginx, HA Proxy and auto scaling configurations 
+ 
+You are free to use ChatGPT or any other AI, but you are expected to learn. 
+ 
+  
+Ferdowsi University of Mashhad – Faculty of Engineering  
+Cloud Computing – Project 
+ 
+  
+8 | P a g e  
+ 
+Phase 5 - Migration to Arvan Cloud (3 point) 
+In this phase, you will migrate all the services that you have implemented in the previous phases to 
+Arvan Cloud. 
+Step 1 – Migrate all the microservices to Arvan Cloud. Ensure that each service is properly configured 
+and that they function correctly in the new environment. This may involve adjusting configurations, 
+networking settings, and deployment processes to align with Arvan Cloud's infrastructure. 
+Step 2 – Take a backup of the auth database on one of the Arvan Cloud services. After successfully 
+creating the backup, delete the database and restore the deleted data by replacing it with the backup. 
+ 
+Deadline 
+• 15th Tir 
+Delivery 
+• Upload a video (max 20 min) on VU 
+• Record a short video demonstrating the successful execution of Step 1 testing of Step 2. 
+• Show that the services are functioning correctly after migration and verify that the database 
+restoration process works as intended. Submit the video as your delivery. 
+ 
+Your Arvan Cloud account will be charged. 
+ 
+ 
+ 
+ 
+ 

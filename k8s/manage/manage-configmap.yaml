@@ -5,7 +5,7 @@ metadata:
     namespace: manage
 data:
     app.env: |
-        DB_HOST=mysql.auth
+        DB_HOST=mysql.c9a4c1e532f44863d573d2be76f3eb17e201a93b-auth
         DB_PORT=3306
         DB_USER=root
         DB_PASSWORD=auth_pass

@@ -13,6 +13,27 @@ spec:
             labels:
                 app: postgres
         spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                            - matchExpressions:
+                                  - key: node-role.kubernetes.io/cloud-container-g2
+                                    operator: In
+                                    values:
+                                        - "true"
+                                  - key: topology.kubernetes.io/zone
+                                    operator: In
+                                    values:
+                                        - bamdad
+                                        - simin
+                                        - foough
+                podAntiAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        - labelSelector:
+                              matchLabels:
+                                  app: postgres
+                          topologyKey: topology.kubernetes.io/zone
             containers:
                 - name: postgres
                   image: postgres:13.13-bullseye
@@ -31,13 +52,13 @@ spec:
                                 key: password64
                       - name: POSTGRES_DB
                         value: "core_db"
-                  resources:
-                      requests:
-                          memory: "256Mi"
-                          cpu: "250m"
-                      limits:
-                          memory: "512Mi"
-                          cpu: "500m"
+                  #   resources:
+                  #       requests:
+                  #           memory: "256Mi"
+                  #           cpu: "250m"
+                  #       limits:
+                  #           memory: "512Mi"
+                  #           cpu: "500m"
                   volumeMounts:
                       - name: postgres-storage
                         mountPath: /var/lib/postgresql/data

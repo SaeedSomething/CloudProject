@@ -2,9 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
     name: nginx-lb
-    namespace: nginx-lb
+    namespace: core
 spec:
-    replicas: 2
+    replicas: 1
     selector:
         matchLabels:
             app: nginx-lb
@@ -13,6 +13,27 @@ spec:
             labels:
                 app: nginx-lb
         spec:
+            affinity:
+                nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                            - matchExpressions:
+                                  - key: node-role.kubernetes.io/cloud-container-g2
+                                    operator: In
+                                    values:
+                                        - "true"
+                                  - key: topology.kubernetes.io/zone
+                                    operator: In
+                                    values:
+                                        - bamdad
+                                        - simin
+                                        - foough
+                podAntiAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                        - labelSelector:
+                              matchLabels:
+                                  app: nginx-lb
+                          topologyKey: topology.kubernetes.io/zone
             containers:
                 - name: nginx
                   image: nginx:1.21
@@ -22,13 +43,13 @@ spec:
                       - name: nginx-config
                         mountPath: /etc/nginx/nginx.conf
                         subPath: nginx.conf
-                  resources:
-                      requests:
-                          cpu: 100m
-                          memory: 128Mi
-                      limits:
-                          cpu: 200m
-                          memory: 256Mi
+                #   resources:
+                #       requests:
+                #           cpu: 100m
+                #           memory: 128Mi
+                #       limits:
+                #           cpu: 200m
+                #           memory: 256Mi
             volumes:
                 - name: nginx-config
                   configMap:
@@ -37,13 +58,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-    name: nginx-lb-service
-    namespace: nginx-lb
+  name: nginx-lb-service
+  namespace: core
 spec:
-    selector:
-        app: nginx-lb
-    ports:
-        - port: 80
-          targetPort: 80
-          nodePort: 30080
-    type: NodePort
+  selector:
+    app: nginx-lb
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer
