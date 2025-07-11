@@ -1,0 +1,6 @@
+# Health Service Components - Broken down into separate files:
+# - health-configmap.yaml
+# - health-deployment.yaml
+# - health-service-svc.yaml
+
+# This file is kept for reference but the individual files should be used for deployment

@@ -1,0 +1,12 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+    name: arvancloud-backup
+provisioner: arvancloud.com/csi
+parameters:
+    type: ssd
+    replication-type: replica-3
+    backup-enabled: "true"
+allowVolumeExpansion: true
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer

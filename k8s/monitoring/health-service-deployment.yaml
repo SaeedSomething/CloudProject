@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: health-service
+    namespace: auth
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: health-service
+    template:
+        metadata:
+            labels:
+                app: health-service
+        spec:
+            affinity:
+                nodeAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                        - weight: 100
+                          preference:
+                              matchExpressions:
+                                  - key: topology.kubernetes.io/zone
+                                    operator: In
+                                    values:
+                                        - simin
+            containers:
+                - name: health-check
+                  image: nginx:alpine
+                  ports:
+                      - containerPort: 80
+                  volumeMounts:
+                      - name: health-config
+                        mountPath: /etc/nginx/conf.d/default.conf
+                        subPath: nginx.conf
+                  resources:
+                      requests:
+                          cpu: 1
+                          memory: 256Mi
+                      limits:
+                          cpu: 1
+                          memory: 512Mi
+            volumes:
+                - name: health-config
+                  configMap:
+                      name: health-config
