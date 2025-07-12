@@ -8,5 +8,5 @@ spec:
         - ReadWriteOnce
     resources:
         requests:
-            storage: 10Gi
-    storageClassName: arvancloud-backup
+            storage: 1Gi
+    storageClassName: csi-cinder-sc-delete-az

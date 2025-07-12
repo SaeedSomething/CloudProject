@@ -2,7 +2,7 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
     name: arvancloud-backup
-provisioner: arvancloud.com/csi
+provisioner: kubernetes.io/no-provisioner
 parameters:
     type: ssd
     replication-type: replica-3

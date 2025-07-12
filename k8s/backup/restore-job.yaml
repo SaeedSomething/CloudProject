@@ -1,0 +1,95 @@
+# restore-job.yaml - For video demonstration
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: restore-auth-db
+    namespace: auth
+spec:
+    template:
+        metadata:
+            labels:
+                app: db-restore
+        spec:
+            affinity:
+                nodeAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                        - weight: 100
+                          preference:
+                              matchExpressions:
+                                  - key: topology.kubernetes.io/zone
+                                    operator: In
+                                    values:
+                                        # - simin
+                                        - bamdad
+                                        # - forough
+            containers:
+                - name: mysql-restore
+                  image: mysql:8.0
+                  command:
+                      - /bin/bash
+                      - -c
+                      - |
+                          echo "Starting database restore process..."
+                          echo "Restore timestamp: $(date)"
+
+                          # List available backups
+                          echo "Available backup files:"
+                          ls -la /backup/
+
+                          # Find the latest backup file
+                          LATEST_BACKUP=$(ls -t /backup/*.sql | head -1)
+                          if [ -z "$LATEST_BACKUP" ]; then
+                            echo "No backup files found!"
+                            exit 1
+                          fi
+
+                          echo "Restoring from: $LATEST_BACKUP"
+                          echo "Backup file size: $(ls -lh $LATEST_BACKUP | awk '{print $5}')"
+
+                          # First, recreate the database
+                          echo "Recreating database..."
+                          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "DROP DATABASE IF EXISTS authdb;"
+                          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "CREATE DATABASE authdb;"
+                          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "GRANT ALL PRIVILEGES ON authdb.* TO 'auth_user'@'%';"
+                          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "FLUSH PRIVILEGES;"
+
+                          # Restore from backup
+                          echo "Restoring database content..."
+                          mysql -h mysql -u auth_user -p$MYSQL_PASSWORD authdb < "$LATEST_BACKUP"
+
+                          if [ $? -eq 0 ]; then
+                            echo "Database restored successfully!"
+                            echo "Verifying restoration..."
+                            mysql -h mysql -u auth_user -p$MYSQL_PASSWORD authdb -e "SHOW TABLES;"
+                            echo "Table count: $(mysql -h mysql -u auth_user -p$MYSQL_PASSWORD authdb -e 'SHOW TABLES;' | wc -l)"
+                          else
+                            echo "Database restore failed!"
+                            exit 1
+                          fi
+                  env:
+                      - name: MYSQL_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: auth-db-credentials
+                                key: DB_PASS
+                      - name: MYSQL_ROOT_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: auth-db-credentials
+                                key: DB_PASS
+                  volumeMounts:
+                      - name: backup-storage
+                        mountPath: /backup
+                  resources:
+                      requests:
+                          memory: "128Mi"
+                          cpu: "100m"
+                      limits:
+                          memory: "256Mi"
+                          cpu: "200m"
+            volumes:
+                - name: backup-storage
+                  persistentVolumeClaim:
+                      claimName: auth-db-backup-pvc
+            restartPolicy: Never
+    backoffLimit: 3

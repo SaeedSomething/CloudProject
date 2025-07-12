@@ -12,7 +12,7 @@ metadata:
 spec:
     ingressClassName: nginx
     rules:
-        - host: gateway-c9a4c1e532-auth.apps.ir-central1.arvancaas.ir
+        - host: nginx-lb-c9a4c1e532-auth.apps.ir-central1.arvancaas.ir
           http:
               paths:
                   # Route everything to internal NGINX load balancer
@@ -20,6 +20,6 @@ spec:
                     pathType: Prefix
                     backend:
                         service:
-                            name: nginx-lb-external
+                            name: nginx-lb-service
                             port:
                                 number: 80

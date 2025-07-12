@@ -5,7 +5,7 @@ metadata:
     namespace: auth
 spec:
     type: ExternalName
-    externalName: nginx-lb-service.ingress-nginx.svc.cluster.local
+    externalName: nginx-lb-service.nginx-lb.svc.cluster.local
     ports:
         - port: 80
           targetPort: 80

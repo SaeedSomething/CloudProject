@@ -5,7 +5,7 @@ metadata:
     name: auth
     namespace: auth
 spec:
-    replicas: 1
+    replicas: 2
     selector:
         matchLabels:
             app: auth
@@ -96,10 +96,10 @@ spec:
                             secretKeyRef:
                                 name: auth-db-credentials
                                 key: DB_PASS
-                #   resources:
-                #       requests:
-                #           memory: "128Mi"
-                #           cpu: "125m"
-                #       limits:
-                #           memory: "128Mi"
-                #           cpu: "125m"
+                  resources:
+                      requests:
+                          cpu: "0.5"
+                          memory: 1Gi
+                      limits:
+                          cpu: "0.5"
+                          memory: 1Gi

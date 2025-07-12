@@ -5,7 +5,7 @@ metadata:
     name: core
     namespace: core
 spec:
-    replicas: 1
+    replicas: 2
     selector:
         matchLabels:
             app: core
@@ -76,10 +76,10 @@ spec:
                       - name: JAVA_TOOL_OPTIONS
                         value: "-XX:-UseContainerSupport -Djdk.disable.cgroup=true -Dcom.sun.management.jmxremote=false"
 
-                #   resources:
-                #       requests:
-                #           memory: "256Mi"
-                #           cpu: "250m"
-                #       limits:
-                #           memory: "500Mi"
-                #           cpu: "500m"
+                  resources:
+                      requests:
+                          memory: 2Gi
+                          cpu: "1.0"
+                      limits:
+                          memory: 2Gi
+                          cpu: "1.0"

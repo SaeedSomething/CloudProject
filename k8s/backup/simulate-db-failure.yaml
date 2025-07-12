@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: simulate-db-failure
+    namespace: auth
+spec:
+    template:
+        metadata:
+            labels:
+                app: db-failure-sim
+        spec:
+            containers:
+                - name: mysql-destroyer
+                  image: mysql:8.0
+                  command:
+                      - /bin/bash
+                      - -c
+                      - |
+                          echo "💥 Starting database failure simulation at $(date)"
+
+                          # Show current data before destruction
+                          echo "📊 Current database state:"
+                          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "USE authdb; SHOW TABLES;"
+
+                          # Count data before destruction
+                          if mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "USE authdb; DESCRIBE users;" > /dev/null 2>&1; then
+                            USER_COUNT=$(mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "USE authdb; SELECT COUNT(*) FROM users;" | tail -n 1)
+                            echo "👥 Current user count: $USER_COUNT"
+                          fi
+
+                          # Simulate catastrophic failure - DROP the database
+                          echo "💥 Simulating database failure..."
+                          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "DROP DATABASE IF EXISTS authdb;"
+
+                          # Verify database is gone
+                          echo "❌ Verifying database destruction:"
+                          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "SHOW DATABASES;" | grep authdb || echo "✅ Database authdb has been destroyed!"
+
+                          echo "🚨 Database failure simulation completed - authdb destroyed!"
+                  env:
+                      - name: MYSQL_ROOT_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: auth-db-credentials
+                                key: DB_PASSWORD
+            restartPolicy: Never
+    backoffLimit: 1

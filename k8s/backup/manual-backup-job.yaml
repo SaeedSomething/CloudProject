@@ -1,0 +1,96 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: manual-auth-backup
+    namespace: auth
+spec:
+    template:
+        metadata:
+            labels:
+                app: db-backup
+                type: manual
+        spec:
+            affinity:
+                nodeAffinity:
+                    preferredDuringSchedulingIgnoredDuringExecution:
+                        - weight: 100
+                          preference:
+                              matchExpressions:
+                                  - key: topology.kubernetes.io/zone
+                                    operator: In
+                                    values:
+                                        - bamdad # Same zone as MySQL
+            containers:
+                - name: mysql-backup
+                  image: mysql:8.0
+                  command:
+                      - /bin/bash
+                      - -c
+                      - |
+                          echo "🔄 Starting manual backup at $(date)"
+
+                          # Create timestamped backup file
+                          BACKUP_FILE="/backup/manual-backup-$(date +%Y%m%d-%H%M%S).sql"
+
+                          # Test database connection
+                          echo "📡 Testing database connection..."
+                          mysql -h mysql -u root -p$MYSQL_ROOT_PASSWORD -e "SELECT 1" authdb
+
+                          if [ $? -eq 0 ]; then
+                            echo "✅ Database connection successful"
+                          else
+                            echo "❌ Database connection failed"
+                            exit 1
+                          fi
+
+                          # Create comprehensive backup (same as CronJob)
+                          echo "💾 Creating database backup..."
+                          mysqldump -h mysql -u root -p$MYSQL_ROOT_PASSWORD \
+                            --single-transaction \
+                            --routines \
+                            --triggers \
+                            authdb > $BACKUP_FILE
+
+                          # Verify backup was created
+                          if [ -f "$BACKUP_FILE" ]; then
+                            SIZE=$(ls -lh $BACKUP_FILE | awk '{print $5}')
+                            echo "✅ Manual backup created successfully: $BACKUP_FILE ($SIZE)"
+                            
+                            # Show backup contents summary
+                            echo "📊 Backup summary:"
+                            echo "   - File size: $SIZE"
+                            echo "   - Creation time: $(date)"
+                            echo "   - Database: authdb"
+                            echo "   - Lines: $(wc -l < $BACKUP_FILE)"
+                            
+                            # List all available backups
+                            echo "📁 All available backups:"
+                            ls -la /backup/
+                          else
+                            echo "❌ Backup creation failed!"
+                            exit 1
+                          fi
+
+                          echo "🎉 Manual backup completed successfully!"
+                  env:
+                      - name: MYSQL_ROOT_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: auth-db-credentials
+                                key: DB_PASSWORD
+                  volumeMounts:
+                      - name: backup-storage
+                        mountPath: /backup
+                  resources:
+                      requests:
+                          cpu: 1
+                          memory: 512Mi
+                      limits:
+                          cpu: 1
+                          memory: 1Gi
+            volumes:
+                - name: backup-storage
+                  persistentVolumeClaim:
+                      claimName: auth-db-backup-pvc
+            restartPolicy: Never
+    backoffLimit: 3
