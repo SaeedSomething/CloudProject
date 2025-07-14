@@ -75,6 +75,8 @@ spec:
                                 key: ACTIVEMQ_USER
                       - name: JAVA_TOOL_OPTIONS
                         value: "-XX:-UseContainerSupport -Djdk.disable.cgroup=true -Dcom.sun.management.jmxremote=false"
+                      # - name: BASE_URL
+                      #   value: 
 
                   resources:
                       requests:

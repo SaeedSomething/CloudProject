@@ -14,12 +14,12 @@ data:
         activemq.username=admin
         auth.grpc.address=auth-grpc.c9a4c1e532f44863d573d2be76f3eb17e201a93b-auth
         auth.grpc.port=50051
-        auth.service.base.url=https://auth-http.c9a4c1e532f44863d573d2be76f3eb17e201a93b-auth:8082
+        auth.service.base.url="http://auth-http.auth.svc.cluster.local:8082"
         server.port=8082
         project.activemq.broker.url=tcp://activemq:61616
         spring.datasource.url=jdbc:postgresql://postgres:5432/core_db
         spring.datasource.hikari.connection-timeout=300000
-        project.url.config=http://localhost:8080
+        project.url.config=https://nginx-lb-c9a4c1e532-ingress-nginx.apps.ir-central1.arvancaas.ir/core
         spring.datasource.schema=public
         -Djdk.internal.platform.disableContainerSupport=true
 
@@ -36,6 +36,6 @@ data:
     SPRING_DATASOURCE_SCHEMA: "public"
     ACTIVEMQ_URL: "failover:(tcp://activemq:61616)?randomize=true&jms.useAsyncSend=true&jms.sendTimeout=5000"
     ACTIVEMQ_USERNAME: "admin"
-    PROJECT_URL_CONFIG: "http://localhost:30080"
+    PROJECT_URL_CONFIG: "https://nginx-lb-c9a4c1e532-ingress-nginx.apps.ir-central1.arvancaas.ir/core"
     PROJECT_SPRING_DATASOURCE_HIKARI_CONNECTIONTIMEOUT: "300000" # e.g., 10 seconds
     MANAGEMENT_METRICS_ENABLE_SYSTEM: "false"
