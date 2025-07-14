@@ -26,8 +26,8 @@ spec:
                                     operator: In
                                     values:
                                         # - bamdad
-                                        - simin
-                                        # - foough
+                                        # - simin
+                                        - forough
                 # podAntiAffinity:
                 #     requiredDuringSchedulingIgnoredDuringExecution:
                 #         - labelSelector:

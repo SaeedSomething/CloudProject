@@ -16,23 +16,23 @@ data:
 
             # Auth service upstream
             upstream auth-service-backend {
-                server auth-http.auth.svc.cluster.local:8082 max_fails=3 fail_timeout=30s;
+                server auth-http.c9a4c1e532f44863d573d2be76f3eb17e201a93b-auth:8082 max_fails=3 fail_timeout=30s;
             }
 
             # Core service upstream
             upstream core-service-backend {
-                server core.core.svc.cluster.local:8080 max_fails=3 fail_timeout=30s;
+                server core.c9a4c1e532f44863d573d2be76f3eb17e201a93b-core:8080 max_fails=3 fail_timeout=30s;
             }
 
             # Manage service upstream
             upstream manage-service-backend {
-                server manage.auth.svc.cluster.local:8080 max_fails=3 fail_timeout=30s;
+                server manage.c9a4c1e532f44863d573d2be76f3eb17e201a93b-auth:8080 max_fails=3 fail_timeout=30s;
             }
 
             # Health service upstream
-            # upstream health-service-backend {
-            #     server health-service.auth.svc.cluster.local:80 max_fails=3 fail_timeout=30s;
-            # }
+            upstream health-service-backend {
+                server health-service.c9a4c1e532f44863d573d2be76f3eb17e201a93b-auth:80 max_fails=3 fail_timeout=30s;
+            }
 
           server {
             listen 80;
@@ -44,48 +44,167 @@ data:
               proxy_set_header Host $host;
               proxy_set_header X-Real-IP $remote_addr;
               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;  # Add for HTTPS awareness
-              proxy_http_version 1.1;  # Support persistent connections
-              proxy_set_header Upgrade $http_upgrade;  # Support WebSocket
-              proxy_set_header Connection "upgrade";   # Support WebSocket
-              proxy_connect_timeout 30s;
-              proxy_send_timeout 30s;
-              proxy_read_timeout 30s;
-              # Add CORS headers if needed
-              add_header Access-Control-Allow-Origin "*";  # Adjust for specific origins
-              add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
-              add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range";
-            }
-
-            # Core service routes (with Swagger UI)
-            location /core/ {
-              rewrite ^/core(/.*)$ $1 break;
-              proxy_pass http://core-service-backend;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
               proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Prefix /auth;
               proxy_http_version 1.1;
               proxy_set_header Upgrade $http_upgrade;
               proxy_set_header Connection "upgrade";
               proxy_connect_timeout 30s;
               proxy_send_timeout 30s;
               proxy_read_timeout 30s;
-              # Enhanced sub_filter for Swagger UI - comprehensive fixes
-              sub_filter 'href="/' 'href="/core/';
-              sub_filter 'src="/' 'src="/core/';
-              sub_filter '"/' '"/core/';
-              sub_filter '/swagger-ui/' '/core/swagger-ui/';
-              sub_filter 'href="/swagger-ui' 'href="/core/swagger-ui';
-              sub_filter 'src="/swagger-ui' 'src="/core/swagger-ui';
-              sub_filter '"/swagger.json"' '"/core/swagger.json"';
-              sub_filter '"/openapi.json"' '"/core/openapi.json"';
-              sub_filter '"/v3/api-docs"' '"/core/v3/api-docs"';
+              # Add CORS headers if needed
+              add_header Access-Control-Allow-Origin "*";
+              add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+              add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range";
+            }
+
+            # Core service routes (with Swagger UI)
+            location /core/ {
+              # Remove trailing slash and pass to backend
+              rewrite ^/core/(.*) /$1 break;
+              proxy_pass http://core-service-backend;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Prefix /core;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection "upgrade";
+              proxy_connect_timeout 30s;
+              proxy_send_timeout 30s;
+              proxy_read_timeout 30s;
               # Add CORS headers
               add_header Access-Control-Allow-Origin "*";
               add_header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE";
               add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization";
             }
+
+            # Specific Swagger UI paths (no rewriting)
+            location /core/swagger-ui/ {
+              proxy_pass http://core-service-backend/swagger-ui/;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              # Enhanced CORS headers for Swagger UI
+              add_header Access-Control-Allow-Origin "*" always;
+              add_header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE" always;
+              add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin" always;
+              add_header Access-Control-Expose-Headers "Content-Length,Content-Range" always;
+              # Handle preflight OPTIONS requests
+              if ($request_method = 'OPTIONS') {
+                add_header Access-Control-Allow-Origin "*";
+                add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+                add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin";
+                add_header Access-Control-Max-Age 1728000;
+                add_header Content-Type "text/plain; charset=utf-8";
+                add_header Content-Length 0;
+                return 204;
+              }
+            }
+
+            # API docs endpoint
+            location /core/v3/api-docs {
+              proxy_pass http://core-service-backend/v3/api-docs;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Prefix /core;
+              # Enhanced CORS headers for API docs
+              add_header Access-Control-Allow-Origin "*" always;
+              add_header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE" always;
+              add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin" always;
+              add_header Content-Type "application/json; charset=utf-8" always;
+              # Handle preflight OPTIONS requests
+              if ($request_method = 'OPTIONS') {
+                add_header Access-Control-Allow-Origin "*";
+                add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+                add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin";
+                add_header Access-Control-Max-Age 1728000;
+                add_header Content-Type "text/plain; charset=utf-8";
+                add_header Content-Length 0;
+                return 204;
+              }
+            }
+
+
+
+            # Swagger configuration override to use correct SpringDoc paths
+            location = /core/swagger-ui/swagger-initializer.js {
+              return 200 'window.onload = function() {
+                window.ui = SwaggerUIBundle({
+                  url: "/core/docs/api-docs",
+                  dom_id: "#swagger-ui",
+                  deepLinking: true,
+                  presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                  ],
+                  plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                  ],
+                  layout: "StandaloneLayout"
+                });
+              };';
+              add_header Content-Type "application/javascript; charset=utf-8";
+              add_header Access-Control-Allow-Origin "*" always;
+            }
+
+            # Direct access to Core service docs (SpringDoc default path with redirect handling)
+            location = /core/docs {
+              proxy_pass http://core-service-backend/docs;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              # Follow redirects internally
+              proxy_redirect http://core-service-backend/swagger-ui/index.html /core/swagger-ui/index.html;
+              proxy_redirect http://core-service-backend/ /core/;
+              # Enhanced CORS headers
+              add_header Access-Control-Allow-Origin "*" always;
+              add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+              add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin" always;
+            }
+
+            # API docs endpoint (SpringDoc configured path)
+            location = /core/docs/api-docs {
+              proxy_pass http://core-service-backend/docs/api-docs;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              # Enhanced CORS headers for API docs
+              add_header Access-Control-Allow-Origin "*" always;
+              add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+              add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin" always;
+              add_header Content-Type "application/json; charset=utf-8" always;
+              # Handle preflight OPTIONS requests
+              if ($request_method = 'OPTIONS') {
+                add_header Access-Control-Allow-Origin "*";
+                add_header Access-Control-Allow-Methods "GET, OPTIONS";
+                add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin";
+                add_header Access-Control-Max-Age 1728000;
+                add_header Content-Type "text/plain; charset=utf-8";
+                add_header Content-Length 0;
+                return 204;
+              }
+            }
+
+            # Alternative docs endpoints
+            # location = /core/docs {
+            #   proxy_pass http://core-service-backend/docs;
+            #   proxy_set_header Host $host;
+            #   proxy_set_header X-Real-IP $remote_addr;
+            #   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            #   proxy_set_header X-Forwarded-Proto $scheme;
+            #   proxy_set_header X-Forwarded-Prefix /core;
+            #   # Enhanced CORS headers
+            #   add_header Access-Control-Allow-Origin "*" always;
+            #   add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+            #   add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin" always;
+            # }
 
             # Specific handling for Swagger JSON to avoid rewrite issues
             location = /core/swagger.json {
@@ -94,7 +213,11 @@ data:
               proxy_set_header X-Real-IP $remote_addr;
               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
               proxy_set_header X-Forwarded-Proto $scheme;
-              add_header Access-Control-Allow-Origin "*";  # Adjust for specific origins
+              # Enhanced CORS headers for JSON files
+              add_header Access-Control-Allow-Origin "*" always;
+              add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+              add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin" always;
+              add_header Content-Type "application/json; charset=utf-8" always;
             }
 
             location = /core/openapi.json {
@@ -103,17 +226,11 @@ data:
               proxy_set_header X-Real-IP $remote_addr;
               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
               proxy_set_header X-Forwarded-Proto $scheme;
-              add_header Access-Control-Allow-Origin "*";
-            }
-
-            # Specific handling for OpenAPI v3 docs
-            location /core/v3/api-docs {
-              proxy_pass http://core-service-backend/v3/api-docs;
-              proxy_set_header Host $host;
-              proxy_set_header X-Real-IP $remote_addr;
-              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto $scheme;
-              add_header Access-Control-Allow-Origin "*";
+              # Enhanced CORS headers for JSON files
+              add_header Access-Control-Allow-Origin "*" always;
+              add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+              add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin" always;
+              add_header Content-Type "application/json; charset=utf-8" always;
             }
 
             # Manage service routes
@@ -136,17 +253,48 @@ data:
             }
 
             # Health check endpoint
-            # location /health {
-            #   proxy_pass http://health-service-backend/;
-            #   proxy_set_header Host $host;
-            #   proxy_set_header X-Real-IP $remote_addr;
-            #   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            #   proxy_set_header X-Forwarded-Proto $scheme;
-            # }
+            location /health {
+              proxy_pass http://health-service-backend/;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+            }
+
+            # Core service mail endpoints (specific handling for API calls)
+            location /core/mail/ {
+              rewrite ^/core/mail/(.*) /mail/$1 break;
+              proxy_pass http://core-service-backend;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_set_header X-Forwarded-Prefix /core;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection "upgrade";
+              proxy_connect_timeout 30s;
+              proxy_send_timeout 30s;
+              proxy_read_timeout 30s;
+              # Enhanced CORS headers for API endpoints
+              add_header Access-Control-Allow-Origin "*" always;
+              add_header Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE" always;
+              add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin" always;
+              # Handle preflight OPTIONS requests
+              if ($request_method = 'OPTIONS') {
+                add_header Access-Control-Allow-Origin "*";
+                add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+                add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Accept,Origin";
+                add_header Access-Control-Max-Age 1728000;
+                add_header Content-Type "text/plain; charset=utf-8";
+                add_header Content-Length 0;
+                return 204;
+              }
+            }
 
             # Default route - API Gateway info
             location / {
-              return 200 '{"message":"Microservices API Gateway","services":["auth","core","manage"],"endpoints":["/auth/","/core/","/manage/"]}\n';
+              return 200 '{"message":"Microservices API Gateway","services":["auth","core","manage","health"],"endpoints":["/auth/","/core/","/manage/","/health"]}\n';
               add_header Content-Type application/json;
             }
           }
